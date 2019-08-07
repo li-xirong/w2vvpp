@@ -1,15 +1,14 @@
 import torch
 import torch.utils.data as data
 import pickle
+from bigfile import BigFile
 from textlib import TextTool, Vocabulary
+from txt2vec import get_lang, BowVec, BowVecNSW, W2Vec, W2VecNSW
 
 def collate_img(data):
-
-    images, idxs, img_ids = zip(*data)
-
-    images = torch.stack(images, 0)
-
-    return images, idxs, img_ids
+    feats, idxs, img_ids = zip(*data)
+    feats = torch.stack(feats, 0)
+    return feats, idxs, img_ids
 
 def collate_text(data):
 
@@ -23,10 +22,7 @@ def collate_text(data):
         end = lengths[i]
         target[i, :end] = cap[:end]
 
-    # multi-scale
-    # word2vec
     cap_w2vs = torch.stack(cap_w2vs, 0) if cap_w2vs[0] is not None else None
-    # bag of words
     cap_bows = torch.stack(cap_bows, 0) if cap_bows[0] is not None else None
 
     targets = (target, cap_w2vs, cap_bows)
@@ -36,14 +32,15 @@ def collate_text(data):
 
 class ImageDataset(data.Dataset):
 
-    def __init__(self, img_feat_file):
-        self.img_feat_file = img_feat_file
-        self.img_ids = img_feat_file.names
+    def __init__(self, params):
+        img_feat_dir = params['img_feat_dir']
+        self.img_feat_file = BigFile(img_feat_dir)
+        self.img_ids = self.img_feat_file.names
         self.length = len(self.img_ids)
 
     def __getitem__(self, index):
         img_id = self.img_ids[index]
-        img_tensor = torch.Tensor(self.img_feat.read_one(img_id))
+        img_tensor = torch.Tensor(self.img_feat_file.read_one(img_id))
 
         return img_tensor, index, img_id
 
@@ -53,9 +50,18 @@ class ImageDataset(data.Dataset):
     
 class TextDataset(data.Dataset):
 
-    def __init__(self, cap_file, w2v_feat_dir, bow_vocab_path, rnn_vocab_path, lang='en'):
+    def __init__(self, params):
+        cap_file = params['cap']
+        w2v_feat_dir = params['w2v']
+        bow_vocab_path = params['bow']
+        rnn_vocab_path = params['rnn']
+        self.lang = get_lang(rnn_vocab_path)
+            
+        self.t2v_w2v = W2VecNSW(w2v_feat_dir) if w2v_feat_dir else None
+        self.t2v_bow = BowVecNSW(bow_vocab_path) if bow_vocab_path else None
+        self.rnn_vocab = pickle.load(open(rnn_vocab_path, 'rb'))
+              
         self.captions = {}
-
         self.cap_ids = []
         with open(cap_file, 'r') as cap_reader:
             for line in cap_reader.readlines():
@@ -63,40 +69,28 @@ class TextDataset(data.Dataset):
                 self.captions[cap_id] = caption
                 self.cap_ids.append(cap_id)
 
-        self.t2v_w2v = Text2VecW2V(w2v_feat_dir)
-        self.t2v_bow = Text2VecBoW(bow_vocab_path)
-        self.rnn_vocab = pickle.load(open(rnn_vocab_path, 'rb'))
         self.length = len(self.cap_ids)
 
     def __getitem__(self, index):
         cap_id = self.cap_ids[index]
         caption = self.captions[cap_id]
-        vocab = self.vocab
+        rnn_vocab = self.rnn_vocab
 
-        # word2vec
-        if self.w2v2vec is not None:
-            cap_w2v = self.w2v2vec.mapping(caption)
-            if cap_w2v is None:
-                cap_w2v = torch.randn(self.w2v2vec.ndims)
-            else:
-                cap_w2v = torch.Tensor(cap_w2v)
+        if self.t2v_w2v is not None:
+            cap_w2v = self.t2v_w2v.encoding(caption)
+            cap_w2v = torch.Tensor(cap_w2v)
         else:
             cap_w2v = None
-        # bag-of-words
-        if self.bow2vec is not None:
-            cap_bow = self.bow2vec.mapping(caption)
-            if cap_bow is None:
-                cap_bow = torch.randn(self.bow2vec.ndims)
-            else:
-                cap_bow = torch.Tensor(cap_bow)
+            
+        if self.t2v_bow is not None:
+            cap_bow = self.t2v_bow.encoding(caption)
+            cap_bow = torch.Tensor(cap_bow)
         else:
             cap_bow = None
 
-        tokens = clean_str_filterstop(caption)
-        caption = []
-        caption.append(vocab('<start>'))
-        caption.extend([vocab(token) for token in tokens])
-        caption.append(vocab('<end>'))
+        tokens =  TextTool.tokenize(caption, language=self.lang, remove_stopword=False)
+        tokens =  ['<start>'] + tokens + ['<end>']
+        caption = [rnn_vocab(token) for token in tokens]
         cap_tensor = torch.Tensor(caption)
 
         return cap_tensor, cap_w2v, cap_bow, index, cap_id
@@ -105,26 +99,48 @@ class TextDataset(data.Dataset):
         return self.length
 
 
-def img_provider(img_feat, batch_size=100, num_workers=2):
-
-    dset = ImageData(img_feat)
-
-    data_loader = torch.utils.data.DataLoader(dataset=dset,
-                                              batch_size=batch_size,
+def img_provider(params):
+    data_loader = torch.utils.data.DataLoader(dataset=ImageDataset(params),
+                                              batch_size=params['batch_size'],
                                               shuffle=False,
                                               pin_memory=True,
-                                              num_workers=num_workers,
+                                              num_workers=params['num_workers'],
                                               collate_fn=collate_img)
     return data_loader
 
-def text_provider(cap_file, vocab, w2v2vec, bow2vec, batch_size=100, num_workers=2):
 
-    dset = TextData(cap_file, w2v2vec, bow2vec, vocab)
-
-    data_loader = torch.utils.data.DataLoader(dataset=dset,
-                                              batch_size=batch_size,
+def txt_provider(params):   
+    data_loader = torch.utils.data.DataLoader(dataset=TextDataset(params),
+                                              batch_size=params['batch_size'],
                                               shuffle=False,
                                               pin_memory=True,
-                                              num_workers=num_workers,
+                                              num_workers=params['num_workers'],
                                               collate_fn=collate_text)
     return data_loader
+
+
+if __name__ == '__main__':
+    import os
+    data_path = 'VisualSearch'
+    collection = 'tgif-msrvtt10k'
+    vid_feat = 'mean_resnext101_resnet152'
+    vid_feat_dir = os.path.join(data_path, collection, 'FeatureData', vid_feat)
+ 
+    img_loader = img_provider({'img_feat_dir': vid_feat_dir, 'batch_size':100, 'num_workers':2})
+    
+    for i, (feat_vecs, idxs, img_ids) in enumerate(img_loader):
+        print i, feat_vecs.shape, len(idxs)
+        break
+    
+    
+    cap = os.path.join(data_path, collection, 'TextData', '%s.caption.txt' % collection)
+    bow = os.path.join(data_path, collection, 'TextData', 'vocab', 'bow_nsw_5.pkl')
+    w2v = os.path.join(data_path, 'word2vec/flickr/vec500flickr30m')
+    rnn = os.path.join(data_path, collection, 'TextData', 'vocab', 'gru_5.pkl')
+    
+    txt_loader = txt_provider({'cap':cap, 'bow':bow, 'w2v':w2v, 'rnn':rnn, 'batch_size':100, 'num_workers':2})
+    
+    for i, (captions, lengths, idxs, cap_ids) in enumerate(txt_loader):
+        print i, captions[0].shape, len(lengths), len(cap_ids)
+        break
+        

@@ -1,19 +1,22 @@
 import numpy as np
 import pickle
 from bigfile import BigFile
-from config import logger
+from common import logger
 from textlib import TextTool
 
+
+def get_lang(data_path):
+    return 'en'
 
 class Txt2Vec(object):
     '''
     norm: 0 no norm, 1 l_1 norm, 2 l_2 norm
     '''
-    def __init__(self, data_path, norm=0, clean=True, lang='en'):
+    def __init__(self, data_path, norm=0, clean=True):
         logger.info(self.__class__.__name__+ ' initializing ...')
         self.data_path = data_path
         self.norm = norm
-        self.lang = lang
+        self.lang = get_lang(data_path)
         self.clean = clean
         assert (norm in [0, 1, 2]), 'invalid norm %s' % norm
 
@@ -40,8 +43,8 @@ class Txt2Vec(object):
        
 class BowVec(Txt2Vec):
 
-    def __init__(self, data_path, norm=0, clean=True, lang='en'):
-        super(BowVec, self).__init__(data_path, norm, clean, lang)
+    def __init__(self, data_path, norm=0, clean=True):
+        super(BowVec, self).__init__(data_path, norm, clean)
         self.vocab = pickle.load(open(data_path, 'rb'))
         self.ndims = len(self.vocab)
         logger.info('vob size: %d, vec dim: %d' % (len(self.vocab), self.ndims))
@@ -57,8 +60,8 @@ class BowVec(Txt2Vec):
 
 
 class W2Vec(Txt2Vec):
-    def __init__(self, data_path, norm=0, clean=True, lang='en'):
-        super(W2Vec, self).__init__(data_path, norm, clean, lang)
+    def __init__(self, data_path, norm=0, clean=True):
+        super(W2Vec, self).__init__(data_path, norm, clean)
         self.w2v = BigFile(data_path)
         vocab_size, self.ndims = self.w2v.shape()
         logger.info('vob size: %d, vec dim: %d' % (vocab_size, self.ndims))
@@ -74,8 +77,8 @@ class W2Vec(Txt2Vec):
         
 
 class BowVecNSW(BowVec):
-    def __init__(self, data_path, norm=0, clean=True, lang='en'):
-        super(BowVecNSW, self).__init__(data_path, norm, clean, lang)
+    def __init__(self, data_path, norm=0, clean=True):
+        super(BowVecNSW, self).__init__(data_path, norm, clean)
         if '_nsw' not in data_path:
             logger.error('WARNING: loaded a vocabulary that contains stopwords')
 

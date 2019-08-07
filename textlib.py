@@ -67,6 +67,10 @@ class Vocabulary(object):
             
     def find(self, word):
         return self.word2idx.get(word, -1)
+    
+    
+    def __getitem__(self, index):
+        return self.idx2word[index]
  
     def __call__(self, word):
         if (word not in self.word2idx):

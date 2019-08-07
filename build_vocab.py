@@ -9,7 +9,7 @@ from collections import Counter
 import os
 import sys
 
-from config import *
+from common import *
 from util import checkToSkip, makedirsforfile
 from textlib import TextTool, Vocabulary
 
