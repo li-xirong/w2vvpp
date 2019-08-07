@@ -3,8 +3,6 @@ import os
 import re
 import sys
 import numpy as np
-from bigfile import BigFile
-from gensim.models import word2vec as w2v
 
 import logging
 
@@ -26,21 +24,24 @@ else:
 
 class TextTool:
     @staticmethod
-    def tokenize(input_str, language='en', remove_stopword=False):
+    def tokenize(input_str, clean=True, language='en', remove_stopword=False):
         if 'en' == language: # English
             # delete non-ascii chars
             #sent = input_str.decode('utf-8').encode('ascii', 'ignore')
             sent = input_str
-            sent = sent.replace('\r',' ')
-            sent = re.sub(r"[^A-Za-z0-9]", " ", sent).strip().lower()
+            if clean:
+                sent = sent.replace('\r',' ')
+                sent = re.sub(r"[^A-Za-z0-9]", " ", sent).strip().lower()
             tokens = sent.split()
             if remove_stopword:
                 tokens = [x for x in tokens if x not in ENGLISH_STOP_WORDS]
         else: # Chinese  
         # sent = input_str #string.decode('utf-8')
             sent = input_str.decode('utf-8')
-            for elem in CHN_DEL_SET:
-                sent = sent.replace(elem,'')
+            
+            if clean:
+                for elem in CHN_DEL_SET:
+                    sent = sent.replace(elem,'')
             sent = sent.encode('utf-8')
             sent = re.sub("[A-Za-z]", "", sent)
             tokens = [x for x in sent.split()] 
@@ -63,6 +64,9 @@ class Vocabulary(object):
             idx = len(self.word2idx)
             self.word2idx[word] = idx
             self.idx2word[idx] = word
+            
+    def find(self, word):
+        return self.word2idx.get(word, -1)
  
     def __call__(self, word):
         if (word not in self.word2idx):
@@ -82,11 +86,11 @@ The dog runs
 dogs-x runs'''.split('\n')
 
     for t in test_strs:
-        print t, '->', TextTool.tokenize(t, 'en'), '->', TextTool.tokenize(t, 'en', True)
+        print t, '->', TextTool.tokenize(t, clean=True, language='en'), '->', TextTool.tokenize(t, 'en', True)
         
     test_strs = '''一间 干净 整洁 的 房间 。
 一只 黄色 的 小狗 趴在 长椅 上'''.split('\n')
     
     for t in test_strs:
-        print t, '->', ' '.join(TextTool.tokenize(t, 'zh')), '->', ' '.join(TextTool.tokenize(t, 'zh', True))
+        print t, '->', ' '.join(TextTool.tokenize(t, clean=True, language='zh')), '->', ' '.join(TextTool.tokenize(t, 'zh', True))
     

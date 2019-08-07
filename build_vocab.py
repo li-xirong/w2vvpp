@@ -23,7 +23,7 @@ def read_from_txt_file(cap_file):
     return captions
 
 def build_vocab(cap_file, encoding, threshold, lang):
-    nosw = 'nosw' in encoding
+    nosw = '_nsw' in encoding
     logger.info("Build a simple vocabulary wrapper from %s", cap_file)
     captions = read_from_txt_file(cap_file)
     counter = Counter()

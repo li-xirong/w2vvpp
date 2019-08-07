@@ -4,7 +4,7 @@ import logging
 ROOT_PATH = os.path.join(os.environ['HOME'], 'VisualSearch')
 MIN_WORD_COUNT = 5
 
-TEXT_ENCODINGS = ['bow', 'bow_nosw', 'gru']
+TEXT_ENCODINGS = ['bow', 'bow_nsw', 'gru']
 DEFAULT_TEXT_ENCODING = 'bow'
 DEFAULT_LANG = 'en'
 
