@@ -46,23 +46,23 @@ def xavier_init_fc(fc):
     fc.bias.data.fill_(0)
 
 
-class VisNet(nn.Module):
+class IdentityNet(nn.Module):
     def __init__(self, opt):
-        super(ImageEncoder, self).__init__()       
+        super().__init__()       
 
-    def forward(self, vis_input):
+    def forward(self, input_x):
         """Extract image feature vectors."""
         # assuming that the precomputed features are already l2-normalized        if self.img_fc:
-        return vis_input
+        return input_x
 
 
-class SimpleVisNet(VisNet):
-    def __init__(self, opt):
-        super(SimpleVisualEncoder, self).__init__()
+class TransformNet(nn.Module):
+    def __init__(self, fc_layers, opt):
+        super().__init__()
         
-        self.fc1 = nn.Linear(opt.img_fc_layers[0], opt.img_fc_layers[1])
+        self.fc1 = nn.Linear(fc_layers[0], fc_layers[1])
         if opt.batch_norm:
-            self.bn1 = nn.BatchNorm1d(opt.img_fc_layers[1])
+            self.bn1 = nn.BatchNorm1d(fc_layers[1])
         else:
             self.bn1 = None
                    
@@ -86,10 +86,10 @@ class SimpleVisNet(VisNet):
         xavier_init_fc(self.fc1)
     
 
-    def forward(self, vis_input):
+    def forward(self, input_x):
         """Extract image feature vectors."""
       
-        features = self.fc1(vis_input)
+        features = self.fc1(input_x)
                   
         if self.bn1 is not None:
             features = self.bn1(features)
@@ -112,9 +112,17 @@ class SimpleVisNet(VisNet):
             if name in own_state:
                 new_state[name] = param
 
-        super(SimpleImageEncoder, self).load_state_dict(new_state)
+        super().load_state_dict(new_state)
 
-
+class VisTransformNet (TransformNet):
+    def __init__(self, opt):
+        super().__init__(opt.img_fc_layers, opt)
+    
+class TxtTransformNet (TransformNet):
+    def __init__(self, opt):
+        super().__init__(opt.txt_fc_layers, opt)
+    
+    
 class TxtEncoder(nn.Module):
     def __init__(self, opt):
         super(TxtEncoder, self).__init__()       
@@ -190,49 +198,16 @@ class TxtNet (nn.Module):
     def __init_encoder(self, opt):
         self.encoder = TxtEncoder(opt)
         
+    def __init_transformer(self, opt):
+        self.transformer = TxtTransformNet(opt)
+        
     def __init__(self, opt):
         self.__init_encoder(opt)
-        
-        # now define the transformation network
-        self.fc1 = nn.Linear(opt.txt_fc_layers[0], opt.txt_fc_layers[1])
-        if opt.batch_norm:
-            self.bn1 = nn.BatchNorm1d(opt.txt_fc_layers[1])
-        else:
-            self.bn1 = None
-                   
-        if opt.activation == 'tanh':
-            self.activation = nn.Tanh()
-        elif opt.activation == 'relu':
-            self.activation = nn.ReLU()
-        else:
-            self.activation = None
-
-        if opt.dropout > 1e-3:
-            self.dropout = nn.Dropout(p=opt.dropout)
-        else:
-            self.dropout = None
-
-        self.init_weights()
-
-    def init_weights(self):
-        """Xavier initialization for the fully connected layer
-        """
-        xavier_init_fc(self.fc1)
+        self.__init_transformer(opt)
     
     def forward(self, txt_input):
-        """Extract image feature vectors."""
         features = self.encoder(txt_input)
-        features = self.fc1(features)
-                  
-        if self.bn1 is not None:
-            features = self.bn1(features)
-        
-        if self.activation is not None:
-            features = self.activation(features)
-  
-        if self.dropout is not None:
-            features = self.dropout(features)
-              
+        features = self.transformer(features)              
         return features
    
 class MultiScaleTxtNet (TxtNet):
@@ -330,10 +305,18 @@ class CrossModalNetwork(object):
 
         return loss_value
 
+'''
+class W2VV (CrossModalNetwork):
+    def __init_vis_net(self, opt):
+        self.vis_net = IdentityNet(opt)
+
+    def __init_txt_net(self, opt):
+        self.txt_net = MultiScaleTxtNet(opt)
+'''
 
 class W2VVPP (CrossModalNetwork):
     def __init_vis_net(self, opt):
-        self.vis_net = SimpleVisNet(opt)
+        self.vis_net = VisTransformerNet(opt)
 
     def __init_txt_net(self, opt):
         self.txt_net = MultiScaleTxtNet(opt)
