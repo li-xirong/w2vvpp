@@ -48,7 +48,8 @@ def xavier_init_fc(fc):
 
 class IdentityNet(nn.Module):
     def __init__(self, opt):
-        super().__init__()       
+        super(IdentityNet, self).__init__()
+        #super().__init__()       # python3
 
     def forward(self, input_x):
         """Extract image feature vectors."""
@@ -58,7 +59,8 @@ class IdentityNet(nn.Module):
 
 class TransformNet(nn.Module):
     def __init__(self, fc_layers, opt):
-        super().__init__()
+        super(TransformNet, self).__init__()
+        #super().__init__()       # python3
         
         self.fc1 = nn.Linear(fc_layers[0], fc_layers[1])
         if opt.batch_norm:
@@ -112,15 +114,15 @@ class TransformNet(nn.Module):
             if name in own_state:
                 new_state[name] = param
 
-        super().load_state_dict(new_state)
+        super(TransformNet, self).load_state_dict(new_state)
 
 class VisTransformNet (TransformNet):
     def __init__(self, opt):
-        super().__init__(opt.img_fc_layers, opt)
+        super(VisTransformNet, self).__init__(opt.vis_fc_layers, opt)
     
 class TxtTransformNet (TransformNet):
     def __init__(self, opt):
-        super().__init__(opt.txt_fc_layers, opt)
+        super(TxtTransformNet, self).__init__(opt.txt_fc_layers, opt)
     
     
 class TxtEncoder(nn.Module):
@@ -132,18 +134,19 @@ class TxtEncoder(nn.Module):
         
         
 class GruTxtEncoder(TxtEncoder):
-    def __init_rnn(self, opt):
-        self.rnn = nn.GRU(opt.we_dim, opt.rnn_size, opt.rnn_num_layer, batch_first=True)
+    # __init_rnn(double underscore) : super private, you're saying that you don't want anybody to override it, it will be accessible just from inside the own class,  should not be used here.
+    def _init_rnn(self, opt):
+        self.rnn = nn.GRU(opt.we_dim, opt.rnn_size, opt.rnn_layer, batch_first=True)
     
     def __init__(self, opt):
-        super().__init__()
-        self.pooling = opt.pooling  
+        super(GruTxtEncoder, self).__init__(opt)
+        self.pooling = opt.pooling
         self.rnn_size = opt.rnn_size
         self.we = nn.Embedding(opt.vocab_size, opt.we_dim)
-        if opt.we_sim == 500:
+        if opt.we_dim == 500:
             self.we.weight = nn.Parameter(opt.we) # initialize with a pre-trained 500-dim w2v
 
-        self.__init_rnn(opt)  
+        self._init_rnn(opt)  
  
 
     def forward(self, txt_input):
@@ -183,48 +186,49 @@ class GruTxtEncoder(TxtEncoder):
 
 class MultiScaleTxtEncoder (GruTxtEncoder):
     def __init__(self, opt):
-        super().__init__(opt)
+        super(MultiScaleTxtEncoder, self).__init__(opt)
 
     def forward(self, txt_input):
         """Handles variable size captions
         """
         # Embed word ids to vectors
         x, lengths, cap_w2vs, cap_bows = txt_input
-        rnn_out = super().forward(self, (x, lengths))
+        rnn_out = super(MultiScaleTxtEncoder, self).forward(self, (x, lengths))
         out = torch.cat((rnn_out, cap_w2vs, cap_bows), dim=1)
         return out
   
 class TxtNet (nn.Module):
-    def __init_encoder(self, opt):
+    def _init_encoder(self, opt):
         self.encoder = TxtEncoder(opt)
         
-    def __init_transformer(self, opt):
+    def _init_transformer(self, opt):
         self.transformer = TxtTransformNet(opt)
         
     def __init__(self, opt):
-        self.__init_encoder(opt)
-        self.__init_transformer(opt)
+        super(TxtNet, self).__init__()
+        self._init_encoder(opt)
+        self._init_transformer(opt)
     
     def forward(self, txt_input):
         features = self.encoder(txt_input)
-        features = self.transformer(features)              
+        features = self.transformer(features)
         return features
    
 class MultiScaleTxtNet (TxtNet):
-    def __init_encoder(self, opt):
+    def _init_encoder(self, opt):
         self.encoder = MultiScaleTxtEncoder(opt)
     
 class CrossModalNetwork(object):
 
-    def __init_vis_net(self, opt):
+    def _init_vis_net(self, opt):
         self.vis_net = VisNet(opt)
 
-    def __init_txt_net(self, opt):
+    def _init_txt_net(self, opt):
         self.txt_net = TxtNet(opt)
     
     def __init__(self, opt):
-        self.__init_vis_net(opt)
-        self.__init_txt_net(opt)
+        self._init_vis_net(opt)
+        self._init_txt_net(opt)
         
         self.grad_clip = opt.grad_clip
         if torch.cuda.is_available():
@@ -315,10 +319,10 @@ class W2VV (CrossModalNetwork):
 '''
 
 class W2VVPP (CrossModalNetwork):
-    def __init_vis_net(self, opt):
-        self.vis_net = VisTransformerNet(opt)
+    def _init_vis_net(self, opt):
+        self.vis_net = VisTransformNet(opt)
 
-    def __init_txt_net(self, opt):
+    def _init_txt_net(self, opt):
         self.txt_net = MultiScaleTxtNet(opt)
 
 
