@@ -12,8 +12,8 @@ class config(object):
     batch_norm = False
 
     vid_feat = 'mean_resnext101_resnet152'
-    img_fc_layers = '0-2048'
-    img_norm = 2 # L_2 norm
+    vis_fc_layers = '0-2048'
+    vis_norm = 2 # L_2 norm
 
     # dropout
     dropout = 0.2
