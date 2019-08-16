@@ -45,9 +45,9 @@ def collate_pair(data):
     cap_w2vs = torch.stack(cap_w2vs, 0) if cap_w2vs[0] is not None else None
     cap_bows = torch.stack(cap_bows, 0) if cap_bows[0] is not None else None
 
-    targets = (target, cap_w2vs, cap_bows)
+    targets = (target, lengths, cap_w2vs, cap_bows)
 
-    return vis_feats, targets, lengths, idxs, vis_ids, cap_ids
+    return vis_feats, targets, idxs, vis_ids, cap_ids
 
 
 class VisionDataset(data.Dataset):
