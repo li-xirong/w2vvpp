@@ -91,6 +91,7 @@ class TransformNet(nn.Module):
     def forward(self, input_x):
         """Extract image feature vectors."""
       
+        input_x = input_x.cuda()
         features = self.fc1(input_x)
                   
         if self.bn1 is not None:
@@ -153,6 +154,7 @@ class GruTxtEncoder(TxtEncoder):
         """Handles variable size captions
         """
         x, lengths = txt_input
+        x = x.cuda()
         batch_size = x.size(0)
         x = self.we(x)
         packed = pack_padded_sequence(x, lengths, batch_first=True)
@@ -193,7 +195,8 @@ class MultiScaleTxtEncoder (GruTxtEncoder):
         """
         # Embed word ids to vectors
         x, lengths, cap_w2vs, cap_bows = txt_input
-        rnn_out = super(MultiScaleTxtEncoder, self).forward(self, (x, lengths))
+        x, cap_w2vs, cap_bows = x.cuda(), cap_w2vs.cuda(), cap_bows.cuda()
+        rnn_out = super(MultiScaleTxtEncoder, self).forward((x, lengths))
         out = torch.cat((rnn_out, cap_w2vs, cap_bows), dim=1)
         return out
   
