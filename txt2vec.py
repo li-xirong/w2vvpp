@@ -74,6 +74,22 @@ class W2Vec(Txt2Vec):
         else:
             vec = np.zeros(self.ndims, )
         return vec
+
+
+class IndexVec(Txt2Vec):
+    def __init__(self, data_path, clean=True):
+        super(IndexVec, self).__init__(data_path, 0, clean)
+        self.vocab = pickle.load(open(data_path, 'rb'))
+        logger.info('vob size: %s' % (len(self.vocab)))
+
+    def _preprocess(self, query):
+        words =  TextTool.tokenize(query, clean=self.clean, language=self.lang, remove_stopword=False)
+        words =  ['<start>'] + words + ['<end>']
+        return words
+        
+    def _encoding(self, words):
+        return np.array([self.vocab(word) for word in words])
+
         
 
 class BowVecNSW(BowVec):
@@ -94,7 +110,7 @@ class W2VecNSW(W2Vec):
         return words        
 
 
-NAME_TO_T2V = {'bow': BowVec, 'bow_nsw':  BowVecNSW, 'w2v': W2Vec, 'w2v_nsw': W2VecNSW}
+NAME_TO_T2V = {'bow': BowVec, 'bow_nsw':  BowVecNSW, 'w2v': W2Vec, 'w2v_nsw': W2VecNSW, 'idxvec': IndexVec}
 
 
 def get_txt2vec(name):
