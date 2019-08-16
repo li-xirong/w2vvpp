@@ -28,7 +28,7 @@ def encode_data(model, data_loader):
     vis_ids = ['']*len(data_loader.dataset)
     txt_ids = ['']*len(data_loader.dataset)
 
-    pabr = Progbar(len(data_loader.dataset))
+    pbar = Progbar(len(data_loader.dataset))
     for i, (vis_inputs, txt_inputs, idxs, batch_vis_ids, batch_txt_ids) in enumerate(data_loader):
 
         vis_emb = model.vis_net(vis_inputs)
@@ -56,18 +56,19 @@ def eval_v2t(vis_embs, txt_embs, npts=None, measure='cosine'):
     vis_embs: (N, N) matrix of videos/images
     txt_embs: (N, N) matrix of captions
     """
-    images = l2norm(images)
-    captions = l2norm(captions)
 
     if npts is None:
-        npts = images.shape[0]
+        npts = vis_embs.shape[0]
 
     ranks = numpy.zeros(npts)
     top1 = numpy.zeros(npts)
 
     if measure == 'cosine':
-        d = numpy.dot(images, captions.T)
-        inds = numpy.argsort(d, axis=1)
+        vis_embs = l2norm(vis_embs)
+        txt_embs = l2norm(txt_embs)
+
+        matrix = numpy.dot(vis_embs, txt_embs.T)
+        inds = numpy.argsort(matrix, axis=1)
 
         for index in range(npts):
             ind = inds[index][::-1]
@@ -85,7 +86,5 @@ def eval_v2t(vis_embs, txt_embs, npts=None, measure='cosine'):
     medr = numpy.floor(numpy.median(ranks)) + 1
     meanr = ranks.mean() + 1
     mir = (1.0/(ranks+1)).mean()
-    if return_ranks:
-        return (r1, r5, r10, medr, meanr, mir), (ranks, top1)
-    else:
-        return (r1, r5, r10, medr, meanr, mir)
+
+    return (r1, r5, r10, medr, meanr, mir)
