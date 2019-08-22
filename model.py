@@ -9,10 +9,13 @@ from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch.backends.cudnn as cudnn
 
-from torch.nn.utils.clip_grad import clip_grad_norm  
+from torch.nn.utils.clip_grad import clip_grad_norm_
 
 from loss import ContrastiveLoss
 from bigfile import BigFile
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def get_we(vocab, w2v_dir):
     w2v = BigFile(w2v_dir)
@@ -49,18 +52,15 @@ def xavier_init_fc(fc):
 class IdentityNet(nn.Module):
     def __init__(self, opt):
         super(IdentityNet, self).__init__()
-        #super().__init__()       # python3
 
     def forward(self, input_x):
         """Extract image feature vectors."""
-        # assuming that the precomputed features are already l2-normalized        if self.img_fc:
         return input_x
 
 
 class TransformNet(nn.Module):
     def __init__(self, fc_layers, opt):
         super(TransformNet, self).__init__()
-        #super().__init__()       # python3
         
         self.fc1 = nn.Linear(fc_layers[0], fc_layers[1])
         if opt.batch_norm:
@@ -89,11 +89,8 @@ class TransformNet(nn.Module):
     
 
     def forward(self, input_x):
-        """Extract image feature vectors."""
-      
-        input_x = input_x.cuda()
-        features = self.fc1(input_x)
-                  
+        features = self.fc1(input_x.to(device))
+
         if self.bn1 is not None:
             features = self.bn1(features)
         
@@ -117,25 +114,26 @@ class TransformNet(nn.Module):
 
         super(TransformNet, self).load_state_dict(new_state)
 
+
 class VisTransformNet (TransformNet):
     def __init__(self, opt):
         super(VisTransformNet, self).__init__(opt.vis_fc_layers, opt)
-    
+
+
 class TxtTransformNet (TransformNet):
     def __init__(self, opt):
         super(TxtTransformNet, self).__init__(opt.txt_fc_layers, opt)
-    
-    
+
+
 class TxtEncoder(nn.Module):
     def __init__(self, opt):
-        super(TxtEncoder, self).__init__()       
+        super(TxtEncoder, self).__init__()
 
     def forward(self, txt_input):
         return txt_input
-        
-        
+
+
 class GruTxtEncoder(TxtEncoder):
-    # __init_rnn(double underscore) : super private, you're saying that you don't want anybody to override it, it will be accessible just from inside the own class,  should not be used here.
     def _init_rnn(self, opt):
         self.rnn = nn.GRU(opt.we_dim, opt.rnn_size, opt.rnn_layer, batch_first=True)
     
@@ -143,19 +141,28 @@ class GruTxtEncoder(TxtEncoder):
         super(GruTxtEncoder, self).__init__(opt)
         self.pooling = opt.pooling
         self.rnn_size = opt.rnn_size
+        self.t2v_idx = opt.t2v_idx
         self.we = nn.Embedding(opt.vocab_size, opt.we_dim)
         if opt.we_dim == 500:
             self.we.weight = nn.Parameter(opt.we) # initialize with a pre-trained 500-dim w2v
 
-        self._init_rnn(opt)  
+        self._init_rnn(opt)
  
-
     def forward(self, txt_input):
         """Handles variable size captions
         """
-        x, lengths = txt_input
-        x = x.cuda()
-        batch_size = x.size(0)
+        batch_size = len(txt_input)
+
+        # caption encoding
+        idx_vecs = [self.t2v_idx.encoding(caption) for caption in txt_input]
+        lengths = [len(vec) for vec in idx_vecs]
+
+        x = torch.zeros(batch_size, max(lengths)).long().to(device)
+        for i, vec in enumerate(idx_vecs):
+            end = lengths[i]
+            x[i, :end] = torch.Tensor(vec)
+
+        # caption embedding
         x = self.we(x)
         packed = pack_padded_sequence(x, lengths, batch_first=True)
 
@@ -165,7 +172,7 @@ class GruTxtEncoder(TxtEncoder):
         padded = pad_packed_sequence(out, batch_first=True)
     
         if self.pooling == 'mean':
-            out = torch.zeros(batch_size, self.rnn_size).cuda()
+            out = torch.zeros(batch_size, self.rnn_size).to(device)
             for i, ln in enumerate(lengths):
                 out[i] = torch.mean(padded[0][i][:ln], dim=0)
         elif self.pooling == 'last':
@@ -174,7 +181,7 @@ class GruTxtEncoder(TxtEncoder):
             I = I.cuda()
             out = torch.gather(padded[0], 1, I).squeeze(1)
         elif self.rnn_type == 'mean_last':
-            out1 = torch.zeros(batch_size, self.rnn_size).cuda()
+            out1 = torch.zeros(batch_size, self.rnn_size).to(device)
             for i, ln in enumerate(lengths):
                 out1[i] = torch.mean(padded[0][i][:ln], dim=0)
 
@@ -186,19 +193,43 @@ class GruTxtEncoder(TxtEncoder):
         return out
 
 
-class MultiScaleTxtEncoder (GruTxtEncoder):
+class BoWTxtEncoder (TxtEncoder):
+    def __init__(self, opt):
+        super(BoWTxtEncoder, self).__init__(opt)
+        self.t2v_bow = opt.t2v_bow
+
+    def forward(self, txt_input):
+        bow_out = torch.Tensor([self.t2v_bow.encoding(caption) for caption in txt_input]).to(device)
+        return bow_out
+
+
+class W2VTxtEncoder (TxtEncoder):
+    def __init__(self, opt):
+        super(W2VTxtEncoder, self).__init__(opt)
+        self.t2v_w2v = opt.t2v_w2v
+
+    def forward(self, txt_input):
+        w2v_out = torch.Tensor([self.t2v_w2v.encoding(caption) for caption in txt_input]).to(device)
+        return w2v_out
+
+
+class MultiScaleTxtEncoder (TxtEncoder):
     def __init__(self, opt):
         super(MultiScaleTxtEncoder, self).__init__(opt)
+        self.rnn_encoder = GruTxtEncoder(opt)
+        self.w2v_encoder = W2VTxtEncoder(opt)
+        self.bow_encoder = BoWTxtEncoder(opt)
 
     def forward(self, txt_input):
         """Handles variable size captions
         """
         # Embed word ids to vectors
-        x, lengths, cap_w2vs, cap_bows = txt_input
-        x, cap_w2vs, cap_bows = x.cuda(), cap_w2vs.cuda(), cap_bows.cuda()
-        rnn_out = super(MultiScaleTxtEncoder, self).forward((x, lengths))
-        out = torch.cat((rnn_out, cap_w2vs, cap_bows), dim=1)
+        rnn_out = self.rnn_encoder(txt_input)
+        w2v_out = self.w2v_encoder(txt_input)
+        bow_out = self.bow_encoder(txt_input)
+        out = torch.cat((rnn_out, w2v_out, bow_out), dim=1)
         return out
+
   
 class TxtNet (nn.Module):
     def _init_encoder(self, opt):
@@ -216,10 +247,12 @@ class TxtNet (nn.Module):
         features = self.encoder(txt_input)
         features = self.transformer(features)
         return features
+
    
 class MultiScaleTxtNet (TxtNet):
     def _init_encoder(self, opt):
         self.encoder = MultiScaleTxtEncoder(opt)
+
     
 class CrossModalNetwork(object):
 
@@ -283,7 +316,7 @@ class CrossModalNetwork(object):
         return loss
 
     def train(self, vis_input, txt_input):
-        """One training step given images and captions.
+        """One training step given vis_feats and captions.
         """
         self.iters += 1
         self.logger.update('it', self.iters)
@@ -292,25 +325,26 @@ class CrossModalNetwork(object):
         # compute the embeddings
         vis_embs = self.vis_net(vis_input)
         txt_embs = self.txt_net(txt_input)
-        #['captions'], txt_input['lengths'])
         
         # measure accuracy and record loss
         self.optimizer.zero_grad()
         loss = self.compute_loss(vis_embs, txt_embs)
 
-        # pytorch 0.3.1
-        #loss_value = loss.data[0]
-        
-        # pytorch 0.4.0
         loss_value = loss.item()
 
         # compute gradient and do SGD step
         loss.backward()
         if self.grad_clip > 0:
-            clip_grad_norm(self.params, self.grad_clip)
+            clip_grad_norm_(self.params, self.grad_clip)
         self.optimizer.step()
 
         return loss_value
+
+    def embed_vis(self, vis_input):
+        raise Exception('Not implemented.')
+
+    def embed_txt(self, txt_input):
+        raise Exception('Not, implemented.')
 
 '''
 class W2VV (CrossModalNetwork):
@@ -337,4 +371,3 @@ def get_model(name):
 
 if __name__ == '__main__':
     model = get_model('w2vvpp')
-    
