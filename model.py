@@ -4,12 +4,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.init
-import torchvision.models as models
-from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch.backends.cudnn as cudnn
-
 from torch.nn.utils.clip_grad import clip_grad_norm_
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from loss import ContrastiveLoss
 from bigfile import BigFile
@@ -40,13 +37,16 @@ def l2norm(X):
     return X
 
 
-def xavier_init_fc(fc):
-    """Xavier initialization for the fully connected layer
+def _initialize_weights(m):
+    """Initialize module weights
     """
-    r = np.sqrt(6.) / np.sqrt(fc.in_features +
-                             fc.out_features)
-    fc.weight.data.uniform_(-r, r)
-    fc.bias.data.fill_(0)
+    if type(m) == nn.Linear:
+        nn.init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif type(m) == nn.BatchNorm1d:
+        nn.init.ones_(m.weight)
+        nn.init.zeros_(m.bias)
 
 
 class IdentityNet(nn.Module):
@@ -85,7 +85,7 @@ class TransformNet(nn.Module):
     def init_weights(self):
         """Xavier initialization for the fully connected layer
         """
-        xavier_init_fc(self.fc1)
+        self.apply(_initialize_weights)
     
 
     def forward(self, input_x):
@@ -142,7 +142,7 @@ class GruTxtEncoder(TxtEncoder):
         self.pooling = opt.pooling
         self.rnn_size = opt.rnn_size
         self.t2v_idx = opt.t2v_idx
-        self.we = nn.Embedding(opt.vocab_size, opt.we_dim)
+        self.we = nn.Embedding(len(self.t2v_idx.vocab), opt.we_dim)
         if opt.we_dim == 500:
             self.we.weight = nn.Parameter(opt.we) # initialize with a pre-trained 500-dim w2v
 
@@ -287,6 +287,9 @@ class CrossModalNetwork(object):
         elif opt.optimizer == 'rmsprop':
             self.optimizer = torch.optim.RMSprop(params, lr=opt.lr)
 
+        self.lr_schedulers = [torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=opt.lr_decay_rate),
+                      torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=2)]
+
         self.iters = 0
 
     def state_dict(self):
@@ -305,22 +308,28 @@ class CrossModalNetwork(object):
         self.vis_net.eval()
         self.txt_net.eval()
 
+    @property
+    def learning_rate(self):
+        """Return learning rate"""
+        lr_list = []
+        for param_group in self.optimizer.param_groups:
+            lr_list.append(param_group['lr'])
+        return lr_list
+
+    def lr_step(self, val_value):
+        self.lr_schedulers[0].step()
+        self.lr_schedulers[1].step(val_value)
+
     def compute_loss(self, vis_embs, txt_embs):
         """Compute the loss given pairs of image and caption embeddings
         """
         loss = self.criterion(txt_embs, vis_embs)
-        # pytorch 0.3.1
-        #self.logger.update('Loss', loss.data[0], vis_emb.size(0)) 
-        # pytorch 0.4.0
-        self.logger.update('Loss', loss.item(), vis_embs.size(0))
         return loss
 
     def train(self, vis_input, txt_input):
         """One training step given vis_feats and captions.
         """
         self.iters += 1
-        self.logger.update('it', self.iters)
-        self.logger.update('lr', self.optimizer.param_groups[0]['lr'])
 
         # compute the embeddings
         vis_embs = self.vis_net(vis_input)
