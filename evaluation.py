@@ -1,13 +1,9 @@
 from __future__ import print_function
-import os
-import pickle
 
-import numpy
-import time
-import numpy as np
 import torch
-from collections import OrderedDict
+import numpy as np
 
+import util
 from generic_utils import Progbar
 
 
@@ -17,11 +13,28 @@ def l2norm(X):
     norm = np.linalg.norm(X, axis=1, keepdims=True)
     return 1.0 * X / norm
 
+
+@util.timer
+def cosine_sim(query_embs, retro_embs):
+    query_embs = l2norm(query_embs)
+    retro_embs = l2norm(retro_embs)
+
+    return query_embs.dot(retro_embs.T)
+
+
+def compute_sim(query_embs, retro_embs, measure='cosine'):
+    if measure == 'cosine':
+        return cosine_sim(query_embs, retro_embs)
+    elif measure == 'euclidean':
+        raise Exception('Not implemented')
+    else:
+        raise Exception('%s is invalid' % measure)
+
         
 def encode_data(model, data_loader):
     """Encode all images and captions loadable by `data_loader`
     """
-    model.switch_to_train()
+    model.switch_to_eval()
 
     vis_embs = None
     txt_embs = None
@@ -29,10 +42,11 @@ def encode_data(model, data_loader):
     txt_ids = ['']*len(data_loader.dataset)
 
     pbar = Progbar(len(data_loader.dataset))
-    for i, (vis_inputs, txt_inputs, idxs, batch_vis_ids, batch_txt_ids) in enumerate(data_loader):
+    for i, (vis_input, txt_input, idxs, batch_vis_ids, batch_txt_ids) in enumerate(data_loader):
 
-        vis_emb = model.vis_net(vis_inputs)
-        txt_emb = model.txt_net(txt_inputs)
+        with torch.no_grad():
+            vis_emb = model.vis_net(vis_input)
+            txt_emb = model.txt_net(txt_input)
 
         if vis_embs is None:
             vis_embs = np.zeros((len(data_loader.dataset), vis_emb.size(1)))
@@ -50,40 +64,74 @@ def encode_data(model, data_loader):
     return vis_embs, txt_embs, vis_ids, txt_ids
 
 
-def eval_v2t(vis_embs, txt_embs, npts=None, measure='cosine'):
+@util.timer
+def encode_vis(model, data_loader):
+    model.switch_to_eval()
+
+    vis_embs = None
+    vis_ids = [''] * len(data_loader.dataset)
+    pbar = Progbar(len(data_loader.dataset))
+    for i, (vis_input, idxs, batch_vis_ids) in enumerate(data_loader):
+        with torch.no_grad():
+            vis_emb = model.vis_net(vis_input)
+
+        if vis_embs is None:
+            vis_embs = np.zeros((len(data_loader.dataset), vis_emb.size(1)))
+
+        vis_embs[idxs] = vis_emb.data.cpu().numpy().copy()
+        for j, idx in enumerate(idxs):
+            vis_ids[idx] = batch_vis_ids[j]
+
+        pbar.add(len(idxs))
+
+    return vis_embs, vis_ids
+
+
+@util.timer
+def encode_txt(model, data_loader):
+    model.switch_to_eval()
+
+    txt_embs = None
+    txt_ids = [''] * len(data_loader.dataset)
+    pbar = Progbar(len(data_loader.dataset))
+    for i, (txt_input, idxs, batch_txt_ids) in enumerate(data_loader):
+        with torch.no_grad():
+            txt_emb = model.txt_net(txt_input)
+
+        if txt_embs is None:
+            txt_embs = np.zeros((len(data_loader.dataset), txt_emb.size(1)))
+
+        txt_embs[idxs] = txt_emb.data.cpu().numpy().copy()
+        for j, idx in enumerate(idxs):
+            txt_ids[idx] = batch_txt_ids[j]
+
+        pbar.add(len(idxs))
+
+    return txt_embs, txt_ids
+
+
+def eval_qry2retro(qry2retro_sim, n_qry=1):
     """
-    Vision->Text (Vision Annotation)
-    vis_embs: (N, N) matrix of videos/images
-    txt_embs: (N, N) matrix of captions
+    Query->Retrieval
+    qry2retro_sim: (n_qry*N, N) matrix of query to video similarity
     """
 
-    if npts is None:
-        npts = vis_embs.shape[0]
+    assert qry2retro_sim.shape[0] / qry2retro_sim.shape[1] == n_qry, qry2retro_sim.shape
+    ranks = np.zeros(qry2retro_sim.shape[0])
 
-    ranks = numpy.zeros(npts)
-    top1 = numpy.zeros(npts)
+    inds = np.argsort(qry2retro_sim, axis=1)
 
-    if measure == 'cosine':
-        vis_embs = l2norm(vis_embs)
-        txt_embs = l2norm(txt_embs)
+    for index in range(len(ranks)):
+        ind = inds[index][::-1]
 
-        matrix = numpy.dot(vis_embs, txt_embs.T)
-        inds = numpy.argsort(matrix, axis=1)
-
-        for index in range(npts):
-            ind = inds[index][::-1]
-            rank = numpy.where(ind == index)[0][0]
-
-            ranks[index] = rank
-
-            ranks[index] = rank
-            top1[index] = ind[0]
+        rank = np.where(ind == index/n_qry)[0][0]
+        ranks[index] = rank
 
     # Compute metrics
-    r1 = 100.0 * len(numpy.where(ranks < 1)[0]) / len(ranks)
-    r5 = 100.0 * len(numpy.where(ranks < 5)[0]) / len(ranks)
-    r10 = 100.0 * len(numpy.where(ranks < 10)[0]) / len(ranks)
-    medr = numpy.floor(numpy.median(ranks)) + 1
+    r1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
+    r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
+    r10 = 100.0 * len(np.where(ranks < 10)[0]) / len(ranks)
+    medr = np.floor(np.median(ranks)) + 1
     meanr = ranks.mean() + 1
     mir = (1.0/(ranks+1)).mean()
 
