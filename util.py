@@ -100,4 +100,4 @@ class LogCollector(object):
         """Log using tensorboard
         """
         for k, v in self.meters.iteritems():
-            tb_logger.log_value(prefix + k, v.val, step=step)
+            tb_logger.add_scalar(prefix + k, v.val, step=step)

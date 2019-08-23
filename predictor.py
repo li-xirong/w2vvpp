@@ -55,13 +55,12 @@ def main():
         logging.info(resume_file + ' not exists.')
         sys.exit(0)
 
-    config = torch.load('checkpoint.pth.tar')['config']
-
     # Load checkpoint
     logger.info('loading model...')
     checkpoint = torch.load(resume_file)
     epoch = checkpoint['epoch']
     best_perf = checkpoint['best_perf']
+    config = checkpoint['config']
 
     # Construct the model
     model = get_model('w2vvpp')(config)
@@ -83,10 +82,7 @@ def main():
 
         if util.checkToSkip(pred_result_file, opt.overwrite):
             sys.exit(0)
-        try:
-            os.makedirs(output_dir)
-        except:
-            pass
+        util.makedirs(output_dir)
 
         capfile = os.path.join(rootpath, testCollection, 'TextData', text_set)
         # load text data
@@ -96,7 +92,7 @@ def main():
         logger.info('Encoding %s captions' % text_set)
         txt_embs, txt_ids = evaluation.encode_txt(model, txt_loader)
 
-        t2i_matrix = evaluation.compute_sim(txt_embs, vis_embs, measure='cosine')
+        t2i_matrix = evaluation.compute_sim(txt_embs, vis_embs, measure=config.measure)
         inds = np.argsort(t2i_matrix, axis=1)
 
         
