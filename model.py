@@ -350,10 +350,24 @@ class CrossModalNetwork(object):
         return loss_value
 
     def embed_vis(self, vis_input):
-        raise Exception('Not implemented.')
+        vis_input = np.array(vis_input)
+        if vis_input.ndim == 1:
+            vis_input = [vis_input]
+
+        with torch.no_grad():
+            vis_input = torch.Tensor(vis_input).to(device)
+            vis_embs = self.vis_net(vis_input)
+
+        return vis_embs.cpu()
 
     def embed_txt(self, txt_input):
-        raise Exception('Not, implemented.')
+        if isinstance(txt_input, str):
+            txt_input = [txt_input]
+
+        with torch.no_grad():
+            txt_embs = self.txt_net(txt_input)
+
+        return txt_embs.cpu()
 
 '''
 class W2VV (CrossModalNetwork):

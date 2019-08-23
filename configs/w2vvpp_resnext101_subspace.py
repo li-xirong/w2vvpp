@@ -16,8 +16,8 @@ class config(object):
     vis_norm = 2 # L_2 norm
 
     # dropout
-    dropout = 0.2
-    last_dropout = 0.2
+    dropout = 0
+    last_dropout = 0
 
     # activation
     activation = 'tanh'

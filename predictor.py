@@ -64,7 +64,9 @@ def main():
 
     # Construct the model
     model = get_model('w2vvpp')(config)
-    print(model.vis_net, '\n', model.txt_net)
+    print(model.vis_net)
+    print(model.txt_net)
+
     model.load_state_dict(checkpoint['model'])
     print("=> loaded checkpoint '{}' (epoch {}, best_perf {})"
          .format(resume_file, epoch, best_perf))
