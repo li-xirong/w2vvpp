@@ -1,5 +1,5 @@
 
-rootpath=$HOME/VisualSearch2
+rootpath=$HOME/VisualSearch
 trainCollection=tgif-msrvtt10k
 valCollection=tv2016train
 val_set=setA

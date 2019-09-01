@@ -1,5 +1,5 @@
 
-rootpath=$HOME/VisualSearch2
+rootpath=$HOME/VisualSearch
 trainCollection=tgif-msrvtt10k
 valCollection=tv2016train
 
@@ -11,7 +11,6 @@ config=w2vvpp_resnext101_subspace
 logger_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$config/runs_0
 
 overwrite=1
-text_set=tv18.avs.txt
 
 python predictor.py $testCollection \
     --rootpath $rootpath --text_sets tv16.avs.txt tv17.avs.txt tv18.avs.txt \
