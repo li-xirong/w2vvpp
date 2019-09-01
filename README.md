@@ -39,9 +39,21 @@ Dataset | No. of video clips or gifs | No. of sentences | Downloads |
 --- | --- | --- | ---
 **training**: tgif-msrvtt10k | 110,855 | 324,534 | [resnext-resnet](http://lixirong.net/data/mm19/tgif-msrvtt10k-resnext-resnet.tar.gz) (XX.X GB), [sentences](http://lixirong.net/data/mm19/tgif-msrvtt10k-sent.tar.gz) (XX.X MB) |
 **validation**: tv2016train | 200 | 400 | [resnext-resnet](http://http://lixirong.net/data/mm19/tv2016train-resnext-resnet.tar.gz) XX.X MB, [sentences](http://lixirong.net/data/mm19/tv2016train-sent.tar.gz) (XX.XX MB)  |
-**test**: IACC.3 | 335,944 | 90 | resnext-resnet](http://http://lixirong.net/data/mm19/iacc.3-resnext-resnet.tar.gz) (XX.X GB), [sentences](http://lixirong.net/data/mm19/iacc.3-sent.tar.gz) (XX.X MB) |
+**test**: IACC.3 | 335,944 | 90 | [resnext-resnet](http://http://lixirong.net/data/mm19/iacc.3-resnext-resnet.tar.gz) (XX.X GB), [sentences](http://lixirong.net/data/mm19/iacc.3-sent.tar.gz) (XX.X MB) |
 
-For more information about the dataset, please refer to https://github.com/li-xirong/avs.
+For more information about the three datasets, please refer to https://github.com/li-xirong/avs.
+
+```bash
+# get visual features
+wget http://lixirong.net/data/mm19/tgif-msrvtt10k-resnext-resnet.tar.gz
+wget http://http://lixirong.net/data/mm19/tv2016train-resnext-resnet.tar.gz
+wget http://http://lixirong.net/data/mm19/iacc.3-resnext-resnet.tar.gz
+
+# get sentences
+wget http://lixirong.net/data/mm19/tgif-msrvtt10k-sent.tar.gz
+wget http://lixirong.net/data/mm19/tv2016train-sent.tar.gz
+wget http://lixirong.net/data/mm19/iacc.3-sent.tar.gz
+```
 
 ### Scripts
 ```
