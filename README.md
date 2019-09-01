@@ -41,7 +41,7 @@ tgif-msrvtt10k | 110,855 | 324,534
 tv2016train | 200 | 400
 IACC.3 | 335,944 | 90
 
-For more infomation about the dataset, please refer to https://github.com/li-xirong/avs.
+For more information about the dataset, please refer to https://github.com/li-xirong/avs.
 
 ### Scripts
 ```
@@ -49,7 +49,8 @@ source ~/w2vvpp/bin/activate
 # build vocabulary on the training set
 ./do_build_vocab.sh
 
-# train w2vvpp on tgif-msrvtt10k based on "w2vvpp_resnext101_subspace" config, you can change config name in do_train.sh
+# train w2vvpp on tgif-msrvtt10k based on "w2vvpp_resnext101_subspace" config
+# you can change config name in do_train.sh
 ./do_train.sh
 
 # test w2vvpp on iacc.3
