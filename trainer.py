@@ -49,7 +49,7 @@ def parse_args():
                         help='Size of a training mini-batch.')
     parser.add_argument('--workers', default=2, type=int,
                         help='Number of data loader workers.')
-    parser.add_argument('--logger_postfix', default='runs_0',
+    parser.add_argument('--model_prefix', default='runs_0', type=str,
                         help='Path to save the model and Tensorboard log.')
     parser.add_argument('--config_name', type=str, default='mean_pyresnext-101_rbps13k',
                         help='model configuration file. (default: mean_pyresnext-101_rbps13k')
@@ -73,13 +73,13 @@ def main():
 
     config = load_config('configs.%s' % opt.config_name)
 
-    logger_path = os.path.join(rootpath, trainCollection, 'w2vvpp_train', valCollection, opt.config_name, opt.logger_postfix)
-    if util.checkToSkip(os.path.join(logger_path, 'model_best.pth.tar'), opt.overwrite):
+    model_path = os.path.join(rootpath, trainCollection, 'w2vvpp_train', valCollection, opt.config_name, opt.model_prefix)
+    if util.checkToSkip(os.path.join(model_path, 'model_best.pth.tar'), opt.overwrite):
         sys.exit(0)
-    util.makedirs(logger_path)
+    util.makedirs(model_path)
 
     global writer
-    writer = SummaryWriter(log_dir=logger_path, flush_secs=5)
+    writer = SummaryWriter(log_dir=model_path, flush_secs=5)
 
     collections = {'train': trainCollection, 'val': valCollection}
 
@@ -122,7 +122,7 @@ def main():
     # Train the Model
     best_perf = 0
     no_impr_counter = 0
-    val_perf_hist_fout = open(os.path.join(logger_path, 'val_perf_hist.txt'), 'w')
+    val_perf_hist_fout = open(os.path.join(model_path, 'val_perf_hist.txt'), 'w')
     for epoch in range(opt.num_epochs):
 
         print('Epoch[{0} / {1}] LR: {2}'.format(epoch, opt.num_epochs, model.learning_rate))
@@ -143,7 +143,7 @@ def main():
         is_best = cur_perf > best_perf
         best_perf = max(cur_perf, best_perf)
         save_checkpoint({'epoch': epoch+1, 'model': model.state_dict(), 'best_perf': best_perf,
-                         'config': config, 'opt': opt}, is_best, logdir=logger_path, only_best=True,
+                         'config': config, 'opt': opt}, is_best, logdir=model_path, only_best=True,
                          filename='checkpoint_epoch_%s.pth.tar'%epoch)
         if is_best:
             no_impr_counter = 0
@@ -156,7 +156,7 @@ def main():
     val_perf_hist_fout.close()
     message = 'best performance on validation:\n Text to video({}): {}'.format(opt.metric, best_perf)
     print(message)
-    with open(os.path.join(logger_path, 'val_perf.txt'), 'w') as fout:
+    with open(os.path.join(model_path, 'val_perf.txt'), 'w') as fout:
         fout.write(message)
 
 

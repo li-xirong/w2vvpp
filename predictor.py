@@ -28,13 +28,13 @@ def parse_args():
                         help='test collection')
     parser.add_argument('--overwrite', type=int, default=0, choices=[0,1],
                         help='overwrite existed vocabulary file. (default: 0)')
-    parser.add_argument('--text_sets', type=str, nargs='+', default=['tv16.avs.txt'],
+    parser.add_argument('--query_sets', type=str, nargs='+', default=['tv16.avs.txt'],
                         help='validation collection set (tv16.avs.txt, tv17.avs.txt, tv18.avs.txt).')
     parser.add_argument('--batch_size', default=128, type=int,
                         help='size of a predicting mini-batch.')
     parser.add_argument('--num_workers', default=2, type=int,
                         help='Number of data loader workers.')
-    parser.add_argument('--logger_path', default='runs_0',
+    parser.add_argument('--model_path', default='runs_0',
                         help='Path to load the model.')
     parser.add_argument('--checkpoint', default='model_best.pth.tar', type=str,
                         help='path to latest checkpoint (default: model_best.pth.tar)')
@@ -50,7 +50,7 @@ def main():
     rootpath = opt.rootpath
     testCollection = opt.testCollection
 
-    resume_file = os.path.join(opt.logger_path, opt.checkpoint)
+    resume_file = os.path.join(opt.model_path, opt.checkpoint)
     if not os.path.exists(resume_file):
         logging.info(resume_file + ' not exists.')
         sys.exit(0)
@@ -78,26 +78,25 @@ def main():
     logger.info('Encoding videos')
     vis_embs, vis_ids = evaluation.encode_vis(model, vis_loader)
 
-    for text_set in opt.text_sets:
-        output_dir = os.path.join(rootpath, testCollection, 'w2vvpp_test', text_set, *opt.logger_path.split('/')[-5:])
+    for query_set in opt.query_sets:
+        output_dir = os.path.join(rootpath, testCollection, 'w2vvpp_test', query_set, *opt.model_path.split('/')[-5:])
         pred_result_file = os.path.join(output_dir, 'id.sent.score.txt')
 
         if util.checkToSkip(pred_result_file, opt.overwrite):
             sys.exit(0)
         util.makedirs(output_dir)
 
-        capfile = os.path.join(rootpath, testCollection, 'TextData', text_set)
+        capfile = os.path.join(rootpath, testCollection, 'TextData', query_set)
         # load text data
         txt_loader = data.txt_provider({'capfile': capfile, 'pin_memory': True,
                                     'batch_size': opt.batch_size, 'num_workers': opt.num_workers})
 
-        logger.info('Encoding %s captions' % text_set)
+        logger.info('Encoding %s captions' % query_set)
         txt_embs, txt_ids = evaluation.encode_txt(model, txt_loader)
 
         t2i_matrix = evaluation.compute_sim(txt_embs, vis_embs, measure=config.measure)
         inds = np.argsort(t2i_matrix, axis=1)
 
-        
         start = time.time()
         with open(pred_result_file, 'w') as fout:
             for index in range(inds.shape[0]):
