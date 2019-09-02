@@ -56,6 +56,15 @@ wget http://lixirong.net/data/mm2019/tv2016train-sent.tar.gz
 wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
 ```
 
+** Pre-trained models
++ [W2VV++(subspace)](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace.pth.tar)(X.X MB)
+
+Model | TV16 | TV17 | TV18 
+|--- | ---| ---| ---|
+|W2VV++(subspace) | ? | ? | ? |
+
+Note that due to better implemenations including improved coding and the use of latest pytorch, the performance is better than those reported in our ACMMM'19 paper.
+
 ### Scripts for training, testing and evaluation
 ```
 source ~/w2vvpp/bin/activate
