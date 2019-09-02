@@ -20,13 +20,10 @@ deactivate
 ## Get started
 
 ### Data
-Required | Size | Description
---- | --- | ---
-word2vec | 3.1G | English word2vec trained on Flickr tags
 
-Run the following script to download and extract a pre-trained word2vec. The extracted data is placed in $HOME/VisualSearch/.
+The sentence encoding network for W2VV++, namely ```MultiScaleTxtEncoder```, needs a pretrained word2vec (w2v) model. In this work, we use a w2v trained on English tags associated with 30 million Flickr images.  Run the following script to download the Flickr w2v model and extract the folder at $HOME/VisualSearch/. The zipped model is around 3.1 gigabytes, so the download may take a while.
 
-```
+```bash
 ROOTPATH=$HOME/VisualSearch
 mkdir -p $ROOTPATH; cd $ROOTPATH
 
@@ -35,27 +32,31 @@ wget http://lixirong.net/data/w2vv-tmm2018/word2vec.tar.gz
 tar zxf word2vec.tar.gz
 ```
 
-Dataset | No. of video clips or gifs | No. of sentences | Downloads |
---- | --- | --- | ---
-**training**: tgif-msrvtt10k | 110,855 | 324,534 | [resnext-resnet](http://lixirong.net/data/mm19/tgif-msrvtt10k-resnext-resnet.tar.gz) (XX.X GB), [sentences](http://lixirong.net/data/mm19/tgif-msrvtt10k-sent.tar.gz) (XX.X MB) |
-**validation**: tv2016train | 200 | 400 | [resnext-resnet](http://http://lixirong.net/data/mm19/tv2016train-resnext-resnet.tar.gz) XX.X MB, [sentences](http://lixirong.net/data/mm19/tv2016train-sent.tar.gz) (XX.XX MB)  |
-**test**: IACC.3 | 335,944 | 90 | [resnext-resnet](http://http://lixirong.net/data/mm19/iacc.3-resnext-resnet.tar.gz) (XX.X GB), [sentences](http://lixirong.net/data/mm19/iacc.3-sent.tar.gz) (XX.X MB) |
+The following three datasets are used for training, validation and testing: tgif-msrvtt10k, tv2016train and iacc.3. For more information about these datasets, please see https://github.com/li-xirong/avs.
 
-For more information about the three datasets, please refer to https://github.com/li-xirong/avs.
+
+**Video feature data**
++ 4096-dim resnext101-resnet152: [tgif-msrvtt10k](http://lixirong.net/data/mm2019/tgif-msrvtt10k-mean_resnext101-resnet152.tar.gz)(1.6G), [tv2016train](http://lixirong.net/data/mm2019/tv2016train-mean_resnext101-resnet152.tar.gz)(2.9M), [iacc.3](http://lixirong.net/data/mm2019/iacc.3-mean_resnext101-resnet152.tar.gz)(4.7G)
 
 ```bash
-# get visual features
-wget http://lixirong.net/data/mm19/tgif-msrvtt10k-resnext-resnet.tar.gz
-wget http://http://lixirong.net/data/mm19/tv2016train-resnext-resnet.tar.gz
-wget http://http://lixirong.net/data/mm19/iacc.3-resnext-resnet.tar.gz
-
-# get sentences
-wget http://lixirong.net/data/mm19/tgif-msrvtt10k-sent.tar.gz
-wget http://lixirong.net/data/mm19/tv2016train-sent.tar.gz
-wget http://lixirong.net/data/mm19/iacc.3-sent.tar.gz
+# get visual features per dataset
+wget http://lixirong.net/data/mm2019/tgif-msrvtt10k-mean_resnext101-resnet152.tar.gz
+wget http://lixirong.net/data/mm2019/tv2016train-mean_resnext101-resnet152.tar.gz
+wget http://lixirong.net/data/mm2019/iacc.3-mean_resnext101-resnet152.tar.gz
 ```
 
-### Scripts
+**Sentence data**
++ Sentences: [tgif-msrvtt10k](http://lixirong.net/data/mm2019/tgif-msrvtt10k-sent.tar.gz), [tv2016train](http://lixirong.net/data/mm2019/tv2016train-sent.tar.gz)
++ TRECVID 2016 / 2017 / 2018 AVS topics and ground truth: [iacc.3](http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz)
+
+```bash
+# get sentences
+wget http://lixirong.net/data/mm2019/tgif-msrvtt10k-sent.tar.gz
+wget http://lixirong.net/data/mm2019/tv2016train-sent.tar.gz
+wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
+```
+
+### Scripts for training, testing and evaluation
 ```
 source ~/w2vvpp/bin/activate
 # build vocabulary on the training set
@@ -68,9 +69,13 @@ source ~/w2vvpp/bin/activate
 # test w2vvpp on iacc.3
 ./do_test.sh
 
+./do_eval.sh
+
 ```
 
+## Tutorials
 
+1. [Use a pre-trained w2vv++ model to encode a given sentence](tutorial.ipynb)
 
 
 ## Citation
