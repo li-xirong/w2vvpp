@@ -66,7 +66,10 @@ Model | TV16 | TV17 | TV18
 Note that due to better implemenations including improved coding and the use of latest pytorch, the performance is better than those reported in our ACMMM'19 paper.
 
 ### Scripts for training, testing and evaluation
-```
+
+#### Do everything from sratch
+
+```bash
 source ~/w2vvpp/bin/activate
 # build vocabulary on the training set
 ./do_build_vocab.sh
@@ -79,7 +82,16 @@ source ~/w2vvpp/bin/activate
 ./do_test.sh
 
 ./do_eval.sh
+```
 
+#### Test and evaluate a pre-trained model
+```bash
+model_path=XXX
+test_collection=XXX
+./do_test.sh $test_collection $model_path
+
+res_path=XXX
+./do_eval.sh $test_collection $res_path 
 ```
 
 ## Tutorials
