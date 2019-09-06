@@ -83,7 +83,9 @@ model_config=w2vvpp_resnext101_subspace
 test_collection=iacc.3
 ./do_test.sh $test_collection $model_config
 
-./do_eval.sh
+cd tv-avs-eval
+edition=tv16
+./do_eval.sh $test_collection $edition $model_config
 ```
 
 #### Test and evaluate a pre-trained model
