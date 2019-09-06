@@ -75,23 +75,26 @@ source ~/w2vvpp/bin/activate
 ./do_build_vocab.sh
 
 # train w2vvpp on tgif-msrvtt10k based on "w2vvpp_resnext101_subspace" config
-# you can change config name in do_train.sh
-./do_train.sh
+model_config=w2vvpp_resnext101_subspace
+
+./do_train.sh $model_config
 
 # test w2vvpp on iacc.3
-./do_test.sh
+test_collection=iacc.3
+./do_test.sh $test_collection $model_config
 
 ./do_eval.sh
 ```
 
 #### Test and evaluate a pre-trained model
 ```bash
-model_path=XXX
-test_collection=XXX
-./do_test.sh $test_collection $model_path
+model_config=w2vvpp_resnext101_subspace
+test_collection=iacc.3
+./do_test.sh $test_collection $model_config
 
-res_path=XXX
-./do_eval.sh $test_collection $res_path 
+cd tv-avs-eval
+edition=tv16
+./do_eval.sh $test_collection $edition $model_config
 ```
 
 ## Tutorials

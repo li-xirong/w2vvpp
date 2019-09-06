@@ -83,7 +83,7 @@ def main():
         pred_result_file = os.path.join(output_dir, 'id.sent.score.txt')
 
         if util.checkToSkip(pred_result_file, opt.overwrite):
-            sys.exit(0)
+            continue
         util.makedirs(output_dir)
 
         capfile = os.path.join(rootpath, testCollection, 'TextData', query_set)
