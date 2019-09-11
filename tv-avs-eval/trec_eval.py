@@ -35,7 +35,7 @@ def xml_to_treceval(opt, input_file):
             logger.info('%s exists. Overwrite' % res_file)
         else:
             logger.info('%s exists. Use "--overwrite 1" if you want to overwrite' % res_file)
-            return
+            return res_file
 
     tree = ET.parse(input_file)
     root = tree.getroot()

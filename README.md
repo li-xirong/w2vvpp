@@ -57,11 +57,11 @@ wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
 ```
 
 **Pre-trained models**
-+ [W2VV++(subspace)](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace.pth.tar)(X.X MB)
++ [W2VV++(subspace)](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace.pth.tar)(224 MB)
 
 Model | TV16 | TV17 | TV18 
 |--- | ---| ---| ---|
-|W2VV++(subspace) | ? | ? | ? |
+|W2VV++(subspace) | 0.150 | 0.197 | 0.109 |
 
 Note that due to better implemenations including improved coding and the use of latest pytorch, the performance is better than those reported in our ACMMM'19 paper.
 
