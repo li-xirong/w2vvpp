@@ -1,9 +1,12 @@
 rootpath=$HOME/VisualSearch
-sim_name=tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101_subspace
 overwrite=0
 
+#./do_eval.sh iacc.3 tv16 tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
+#./do_eval.sh iacc.3 tv17 tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
+#./do_eval.sh iacc.3 tv18 tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
+
 if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 testCollection topic_set $sim_name"
+    echo "Usage: $0 testCollection topic_set sim_name"
     exit
 fi
 

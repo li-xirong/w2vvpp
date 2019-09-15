@@ -5,7 +5,7 @@ W2VV++: A fully deep learning solution for ad-hoc video search
 * Ubuntu 16.04
 * cuda 10
 * python 2.7.12
-* PyTorch 1.1.0
+* PyTorch 1.2.0
 * tensorboard 1.14.0
 * numpy 1.16.4
 
@@ -92,39 +92,35 @@ model_config=w2vvpp_resnext101_subspace
 ./do_train.sh $trainCollection $valCollection $val_set $model_config
 
 # test w2vvpp on iacc.3
-./do_test.sh iacc.3 $trainCollection $valCollection $val_set $model_config
+model_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$val_set/$mocdel_config/runs_0/model_best.pth.tar
+sim_name=$trainCollection/$valCollection/$val_set/$model_config/runs_0
 
-sim_name=$trainCollection/$valCollection/$val_set/$model_config
+./do_test.sh iacc.3 $model_path $sim_name
 
 cd tv-avs-eval
-./do_eval.sh iacc.3 $sim_name tv16
-./do_eval.sh iacc.3 $sim_name tv17
-./do_eval.sh iacc.3 $sim_name tv18
+./do_eval.sh iacc.3 tv16 $sim_nam
+./do_eval.sh iacc.3 tv17 $sim_nam
+./do_eval.sh iacc.3 tv18 $sim_nam
 ```
 
 #### Test and evaluate a pre-trained model
 
 Assume the model has been placed at the following path:
 ```bash
-$rootpath/tgif-msrvtt10k/w2vvpp_train/tv2016train/setA/w2vvpp_resnext101_subspace/runs_0/w2vvpp_resnext101_resnet152_subspace.pth.tar
+~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar
 ```
 
 ```bash
 
 # apply the trained w2vvpp model on iacc.3 for answering tv16 / tv17 / tv18 queries
-trainCollection=tgif-msrvtt10k
-valCollection=tv2016train
-val_set=setA
-model_config=w2vvpp_resnext101_subspace
-sim_name=$trainCollection/$valCollection/$val_set/$model_config
 
-./do_test.sh iacc.3 $trainCollection $valCollection $val_set $model_config
+./do_test.sh iacc.3 ~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar w2vvpp_resnext101_resnet152_subspace_v190916
 
 # evaluate the performance
 cd tv-avs-eval
-./do_eval.sh iacc.3 $sim_name tv16  # tv16 infAP: 0.150
-./do_eval.sh iacc.3 $sim_name tv17  # tv17 infAP: 0.197
-./do_eval.sh iacc.3 $sim_name tv18  # tv18 infAP: 0.109
+./do_eval.sh iacc.3 tv16 w2vvpp_resnext101_resnet152_subspace_v190916 # tv16 infAP: 0.150
+./do_eval.sh iacc.3 tv17 w2vvpp_resnext101_resnet152_subspace_v190916 # tv17 infAP: 0.197
+./do_eval.sh iacc.3 tv18 w2vvpp_resnext101_resnet152_subspace_v190916 # tv18 infAP: 0.109
 ```
 
 ## Tutorials

@@ -75,8 +75,7 @@ def main():
     vis_loader = data.vis_provider({'vis_feat': vis_feat_file, 'pin_memory': True,
                                     'batch_size': opt.batch_size, 'num_workers': opt.num_workers})
 
-    logger.info('Encoding videos')
-    vis_embs, vis_ids = evaluation.encode_vis(model, vis_loader)
+    vis_embs = None
 
     for query_set in opt.query_sets:
         output_dir = os.path.join(rootpath, testCollection, 'SimilarityIndex', query_set, opt.sim_name)
@@ -85,6 +84,10 @@ def main():
         if util.checkToSkip(pred_result_file, opt.overwrite):
             continue
         util.makedirs(output_dir)
+
+        if vis_embs is None:
+            logger.info('Encoding videos')
+            vis_embs, vis_ids = evaluation.encode_vis(model, vis_loader)
 
         capfile = os.path.join(rootpath, testCollection, 'TextData', query_set)
         # load text data

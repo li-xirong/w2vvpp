@@ -1,30 +1,30 @@
 
 rootpath=$HOME/VisualSearch
-trainCollection=tgif-msrvtt10k
-valCollection=tv2016train
-val_set=setA
+overwrite=0
 
-if [ "$#" -ne 5 ]; then
-    echo "Usage: $0 testCollection trainCollection valCollection val_set config"
+#trainCollection=tgif-msrvtt10k
+#valCollection=tv2016train
+#val_set=setA
+#config=w2vvpp_resnext101-resnet152_subspace
+#model_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$val_set/$config/runs_0/model_best.pth.tar
+#sim_name=$trainCollection/$valCollection/$val_set/$config
+
+#./do_test.sh iacc.3 ~/VisualSearch/tgif-msrvtt10k/w2vvpp_train/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0/model_best.pth.tar tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
+
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 testCollection model_path sim_name"
     exit
 fi
 
 testCollection=$1
-trainCollection=$2
-valCollection=$3
-val_set=$4
-config=$5
-
-model_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$val_set/$config/runs_0/w2vvpp_resnext101_resnet152_subspace.pth.tar
+model_path=$2
+sim_name=$3
 
 if [ ! -f "$model_path" ]; then
     echo "model not found: $model_path"
     exit
 fi
 
-sim_name=$trainCollection/$valCollection/$val_set/$config
-
-overwrite=0
 
 python predictor.py $testCollection $model_path $sim_name \
     --query_sets tv16.avs.txt tv17.avs.txt tv18.avs.txt \
