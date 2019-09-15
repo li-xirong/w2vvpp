@@ -40,7 +40,7 @@ def timer(fn):
         ret = fn(*args, **kwargs)
 
         elapsed_time = time.time() - start_time
-        print (fn.__name__ + ' execution time: %.3f\n' % elapsed_time)
+        print (fn.__name__ + ' execution time: %.3f seconds\n' % elapsed_time)
 
         return ret
     return compute_time

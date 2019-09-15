@@ -2,17 +2,27 @@
 rootpath=$HOME/VisualSearch
 trainCollection=tgif-msrvtt10k
 valCollection=tv2016train
+val_set=setA
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 testCollection config"
+if [ "$#" -ne 5 ]; then
+    echo "Usage: $0 testCollection trainCollection valCollection val_set config"
     exit
 fi
 
 testCollection=$1
-config=$2
+trainCollection=$2
+valCollection=$3
+val_set=$4
+config=$5
 
-model_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$config/runs_0/w2vvpp_resnext101_resnet152_subspace.pth.tar
-sim_name=$trainCollection/$valCollection/$config
+model_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$val_set/$config/runs_0/w2vvpp_resnext101_resnet152_subspace.pth.tar
+
+if [ ! -f "$model_path" ]; then
+    echo "model not found: $model_path"
+    exit
+fi
+
+sim_name=$trainCollection/$valCollection/$val_set/$config
 
 overwrite=0
 

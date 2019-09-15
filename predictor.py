@@ -104,7 +104,7 @@ def main():
 
                 fout.write(txt_ids[index]+' '+' '.join([vis_ids[i]+' %s'%t2i_matrix[index][i]
                     for i in ind])+'\n')
-        print('writing result into file time: %.3f\n' % (time.time()-start))
+        print('writing result into file time: %.3f seconds\n' % (time.time()-start))
 
 
 if __name__ == '__main__':
