@@ -1,6 +1,7 @@
 
 rootpath=$HOME/VisualSearch
 
+#./do_train.sh tgif-msrvtt10k tv2016train setA w2vvpp_resnext101_subspace
 
 if [ "$#" -ne 4 ]; then
     echo "Usage: $0 trainCollection valCollection val_set config"

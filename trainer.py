@@ -70,10 +70,11 @@ def main():
     rootpath = opt.rootpath
     trainCollection = opt.trainCollection
     valCollection = opt.valCollection
+    val_set = opt.val_set
 
     config = load_config('configs.%s' % opt.config_name)
 
-    model_path = os.path.join(rootpath, trainCollection, 'w2vvpp_train', valCollection, opt.config_name, opt.model_prefix)
+    model_path = os.path.join(rootpath, trainCollection, 'w2vvpp_train', valCollection, val_set, opt.config_name, opt.model_prefix)
     if util.checkToSkip(os.path.join(model_path, 'model_best.pth.tar'), opt.overwrite):
         sys.exit(0)
     util.makedirs(model_path)
@@ -83,7 +84,7 @@ def main():
 
     collections = {'train': trainCollection, 'val': valCollection}
 
-    capfiles = {'train': '%s.caption.txt', 'val': opt.val_set + '/%s.caption.txt'}
+    capfiles = {'train': '%s.caption.txt', 'val': val_set + '/%s.caption.txt'}
     cap_file_paths = {x: os.path.join(rootpath, collections[x], 'TextData', capfiles[x]%collections[x]) for x in collections}
 
     vis_feat_files = {x: BigFile(os.path.join(rootpath, collections[x], 'FeatureData', config.vid_feat)) for x in collections}
