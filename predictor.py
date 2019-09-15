@@ -26,6 +26,10 @@ def parse_args():
                         help='path to datasets. (default: %s)'%ROOT_PATH)
     parser.add_argument('testCollection', type=str,
                         help='test collection')
+    parser.add_argument('model_path', type=str,
+                        help='Path to load the model.')
+    parser.add_argument('sim_name', type=str,
+                        help='sub-folder where computed similarities are saved')
     parser.add_argument('--overwrite', type=int, default=0, choices=[0,1],
                         help='overwrite existed vocabulary file. (default: 0)')
     parser.add_argument('--query_sets', type=str, nargs='+', default=['tv16.avs.txt'],
@@ -34,11 +38,7 @@ def parse_args():
                         help='size of a predicting mini-batch.')
     parser.add_argument('--num_workers', default=2, type=int,
                         help='Number of data loader workers.')
-    parser.add_argument('--model_path', default='runs_0',
-                        help='Path to load the model.')
-    parser.add_argument('--checkpoint', default='model_best.pth.tar', type=str,
-                        help='path to latest checkpoint (default: model_best.pth.tar)')
-
+ 
     args = parser.parse_args()
     return args
 
@@ -49,8 +49,8 @@ def main():
 
     rootpath = opt.rootpath
     testCollection = opt.testCollection
-
-    resume_file = os.path.join(opt.model_path, opt.checkpoint)
+    
+    resume_file = os.path.join(opt.model_path)
     if not os.path.exists(resume_file):
         logging.info(resume_file + ' not exists.')
         sys.exit(0)
@@ -79,7 +79,7 @@ def main():
     vis_embs, vis_ids = evaluation.encode_vis(model, vis_loader)
 
     for query_set in opt.query_sets:
-        output_dir = os.path.join(rootpath, testCollection, 'w2vvpp_test', query_set, *opt.model_path.split('/')[-5:])
+        output_dir = os.path.join(rootpath, testCollection, 'SimilarityIndex', query_set, opt.sim_name)
         pred_result_file = os.path.join(output_dir, 'id.sent.score.txt')
 
         if util.checkToSkip(pred_result_file, opt.overwrite):

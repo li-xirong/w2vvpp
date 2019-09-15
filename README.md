@@ -89,6 +89,12 @@ edition=tv16
 ```
 
 #### Test and evaluate a pre-trained model
+
+Assume the model has been placed at the following path:
+```bash
+$rootpath/tgif-msrvtt10k/w2vvpp_train/tv2016train/w2vvpp_resnext101_subspace/runs_0/model_best.pth.tar
+```
+
 ```bash
 model_config=w2vvpp_resnext101_subspace
 test_collection=iacc.3
