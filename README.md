@@ -59,11 +59,11 @@ wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
 
 
 **Pre-trained models**
-+ [W2VV++(subspace)](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar)(w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar)(240 MB)
++ [w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar](240 MB)
 
 Model | TV16 | TV17 | TV18 | OVERALL
 |--- | ---| ---| ---| ---|
-|W2VV++(subspace) | 0.162 | 0.223 | 0.101 | 0.162 |
+|w2vvpp_resnext101_resnet152_subspace_v190916 | 0.162 | 0.223 | 0.101 | 0.162 |
 
 Note that due to SGD based training, the performance of a single model learned from scratch might differ slightly from those reported in the ACMMM'19 paper. For better and stable performance, ensemble is suggested.
 
