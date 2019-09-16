@@ -15,8 +15,8 @@ train_collection ='tgif-msrvtt10k'
 val_collection = 'tv2016train'
 test_collection = 'iacc.3'
 
-vis_feat = 'mean_resnext101_resnet152'
-
+#vis_feat = 'mean_resnext101_resnet152'
+vis_feat = 'mean_pyresnext-101_rbps13k,flatten0_output,os'
 
 
 class TestSuite (unittest.TestCase):
