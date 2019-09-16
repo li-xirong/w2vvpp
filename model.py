@@ -350,6 +350,7 @@ class CrossModalNetwork(object):
         return loss_value
 
     def embed_vis(self, vis_input):
+        self.switch_to_eval()
         vis_input = np.array(vis_input)
         if vis_input.ndim == 1:
             vis_input = [vis_input]
@@ -361,6 +362,7 @@ class CrossModalNetwork(object):
         return vis_embs.cpu()
 
     def embed_txt(self, txt_input):
+        self.switch_to_eval()
         if isinstance(txt_input, str):
             txt_input = [txt_input]
 

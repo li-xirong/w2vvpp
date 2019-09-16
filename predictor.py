@@ -61,6 +61,9 @@ def main():
     epoch = checkpoint['epoch']
     best_perf = checkpoint['best_perf']
     config = checkpoint['config']
+    if hasattr(config, 't2v_w2v'):
+        w2v_feature_file = os.path.join(rootpath, 'word2vec', 'flickr', 'vec500flickr30m', 'feature.bin')
+        config.t2v_w2v.w2v.binary_file = w2v_feature_file
 
     # Construct the model
     model = get_model('w2vvpp')(config)
