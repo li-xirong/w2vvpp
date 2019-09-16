@@ -59,7 +59,7 @@ wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
 
 
 **Pre-trained models**
-+ [w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar](240 MB)
++ [w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar)(240 MB)
 
 Model | TV16 | TV17 | TV18 | OVERALL
 |--- | ---| ---| ---| ---|
@@ -72,6 +72,17 @@ Note that due to SGD based training, the performance of a single model learned f
 Before executing the following scripts, please check if the environment (data, software, etc) is ready by running [test_env.py](test_env.py):
 ```bash
 python test_env.py
+
+test_rootpath (__main__.TestSuite) ... ok
+test_test_data (__main__.TestSuite) ... ok
+test_train_data (__main__.TestSuite) ... ok
+test_val_data (__main__.TestSuite) ... ok
+test_w2v_dir (__main__.TestSuite) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+OK
 ```
 
 #### Do everything from sratch
