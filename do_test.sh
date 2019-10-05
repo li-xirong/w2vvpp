@@ -11,14 +11,15 @@ overwrite=0
 
 #./do_test.sh iacc.3 ~/VisualSearch/tgif-msrvtt10k/w2vvpp_train/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0/model_best.pth.tar tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 testCollection model_path sim_name"
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 testCollection model_path sim_name query_sets"
     exit
 fi
 
 testCollection=$1
 model_path=$2
 sim_name=$3
+query_sets=$4 # tv16.avs.txt,tv17.avs.txt,tv18.avs.txt for TRECVID 16/17/18 and tv19.avs.txt for TRECVID19
 
 if [ ! -f "$model_path" ]; then
     echo "model not found: $model_path"
@@ -27,5 +28,5 @@ fi
 
 
 python predictor.py $testCollection $model_path $sim_name \
-    --query_sets tv16.avs.txt tv17.avs.txt tv18.avs.txt \
+    --query_sets $query_sets \
     --rootpath $rootpath  --overwrite $overwrite

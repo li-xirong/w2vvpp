@@ -15,7 +15,8 @@ topic_set=$2
 sim_name=$3
 
 score_file=$rootpath/$test_collection/SimilarityIndex/$topic_set.avs.txt/$sim_name/id.sent.score.txt
+echo $score_file
 
-bash do_txt2xml.sh $score_file $topic_set $overwrite
+bash do_txt2xml.sh $test_collection $score_file $topic_set $overwrite
 python trec_eval.py ${score_file}.xml --rootpath $rootpath --collection $test_collection --edition $topic_set --overwrite $overwrite
 

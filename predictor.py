@@ -32,8 +32,8 @@ def parse_args():
                         help='sub-folder where computed similarities are saved')
     parser.add_argument('--overwrite', type=int, default=0, choices=[0,1],
                         help='overwrite existed vocabulary file. (default: 0)')
-    parser.add_argument('--query_sets', type=str, nargs='+', default=['tv16.avs.txt'],
-                        help='validation collection set (tv16.avs.txt, tv17.avs.txt, tv18.avs.txt).')
+    parser.add_argument('--query_sets', type=str, default='tv16.avs.txt',
+                        help='test query sets,  tv16.avs.txt,tv17.avs.txt,tv18.avs.txt for TRECVID 16/17/18 and tv19.avs.txt for TRECVID19.')
     parser.add_argument('--batch_size', default=128, type=int,
                         help='size of a predicting mini-batch.')
     parser.add_argument('--num_workers', default=2, type=int,
@@ -80,7 +80,7 @@ def main():
 
     vis_embs = None
 
-    for query_set in opt.query_sets:
+    for query_set in opt.query_sets.split(','):
         output_dir = os.path.join(rootpath, testCollection, 'SimilarityIndex', query_set, opt.sim_name)
         pred_result_file = os.path.join(output_dir, 'id.sent.score.txt')
 

@@ -40,9 +40,8 @@ def wrap_topic_result(tNum, elapsedTime, topicResult):
     return new_res
 
 
-def process(options, input_txt_file):
+def process(options, collection, input_txt_file):
     rootpath = options.rootpath
-    collection = options.collection
     overwrite = options.overwrite
     trtype = options.trtype
     pclass = options.pclass
@@ -116,9 +115,8 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     from optparse import OptionParser
-    parser = OptionParser(usage="""usage: %prog [options] input_txt_file""")
+    parser = OptionParser(usage="""usage: %prog [options] collection input_txt_file""")
     parser.add_option('--rootpath', type=str, default=ROOT_PATH, help='path to datasets. (default: %s)'%ROOT_PATH)
-    parser.add_option('--collection', type=str, default=COLLECTION, help='test collection')
     parser.add_option("--overwrite", default=0, type="int", help="overwrite existing file (default: 0)")
     parser.add_option("--trtype", default=TRAIN_TYPE, type="string", help="training type (default: %s)" % TRAIN_TYPE)
     parser.add_option("--edition", default=EDITION, type="string", help="trecvid edition (default: %s)" % EDITION)
@@ -134,7 +132,7 @@ def main(argv=None):
         parser.print_help()
         return 1
 
-    return process(options, args[0])
+    return process(options, args[0], args[1])
 
 
 if __name__ == "__main__":
