@@ -16,4 +16,4 @@ val_set=$3 #setA
 config=$4
 
 python trainer.py $trainCollection $valCollection \
-    --rootpath $rootpath --config $config --val_set $val_set --model_prefix runs_0
+    --rootpath $rootpath --config $config --val_set $val_set --model_prefix runs_5

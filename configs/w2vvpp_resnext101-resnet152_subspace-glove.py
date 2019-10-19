@@ -4,9 +4,9 @@ class config(object):
     threshold = 5
     bow_norm = 0
 
-    w2v_name = 'word2vec/flickr/vec500flickr30m'
+    w2v_name = 'glove/42B.300d'
 
-    rnn_we_dim = 500
+    rnn_we_dim = 300
     rnn_size = 1024
     rnn_layer = 1
     txt_fc_layers = '0-2048'

@@ -10,11 +10,14 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from loss import ContrastiveLoss
 from bigfile import BigFile
+from common import logger
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def get_we(vocab, w2v_dir):
+    logger.info("loading word embeddings from %s for %d words", w2v_dir, len(vocab))
+
     w2v = BigFile(w2v_dir)
     ndims = w2v.ndims
     nr_words = len(vocab)
@@ -22,6 +25,7 @@ def get_we(vocab, w2v_dir):
     we = np.random.uniform(low=-1.0, high=1.0, size=(nr_words, ndims))
 
     renamed, vecs = w2v.read(words)
+    logger.info("%d embeddings loaded", len(renamed))
     for i, word in enumerate(renamed):
         idx = vocab.find(word)
         we[idx] = vecs[i]
@@ -135,16 +139,16 @@ class TxtEncoder(nn.Module):
 
 class GruTxtEncoder(TxtEncoder):
     def _init_rnn(self, opt):
-        self.rnn = nn.GRU(opt.we_dim, opt.rnn_size, opt.rnn_layer, batch_first=True)
+        self.rnn = nn.GRU(opt.rnn_we_dim, opt.rnn_size, opt.rnn_layer, batch_first=True)
     
     def __init__(self, opt):
         super(GruTxtEncoder, self).__init__(opt)
         self.pooling = opt.pooling
         self.rnn_size = opt.rnn_size
         self.t2v_idx = opt.t2v_idx
-        self.we = nn.Embedding(len(self.t2v_idx.vocab), opt.we_dim)
-        if opt.we_dim == 500:
-            self.we.weight = nn.Parameter(opt.we) # initialize with a pre-trained 500-dim w2v
+        self.we = nn.Embedding(len(self.t2v_idx.vocab), opt.rnn_we_dim)
+        if opt.we is not None:
+            self.we.weight = nn.Parameter(opt.we) # initialize with a pre-trained w2v
 
         self._init_rnn(opt)
  

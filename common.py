@@ -5,6 +5,8 @@
 
 import os
 import logging
+#import importlib
+from importlib import import_module
 
 ROOT_PATH = os.path.join(os.environ['HOME'], 'VisualSearch')
 MIN_WORD_COUNT = 5
@@ -18,3 +20,8 @@ logging.basicConfig(
     format="[%(asctime)s - %(filename)s:line %(lineno)s] %(message)s",
     datefmt='%d %b %H:%M:%S',
     level=logging.INFO)
+
+
+def load_config(config_path):
+    module = import_module(config_path)
+    return module.config()

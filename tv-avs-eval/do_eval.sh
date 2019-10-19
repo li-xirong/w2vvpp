@@ -1,5 +1,5 @@
 rootpath=$HOME/VisualSearch
-overwrite=0
+overwrite=1
 
 #./do_eval.sh iacc.3 tv16 tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
 #./do_eval.sh iacc.3 tv17 tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0

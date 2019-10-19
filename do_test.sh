@@ -1,6 +1,6 @@
 
 rootpath=$HOME/VisualSearch
-overwrite=0
+overwrite=1
 
 #trainCollection=tgif-msrvtt10k
 #valCollection=tv2016train

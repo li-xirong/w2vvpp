@@ -55,6 +55,10 @@ def main():
         logging.info(resume_file + ' not exists.')
         sys.exit(0)
 
+    config_name = opt.model_path.split(os.sep)[-3]
+    assert(config_name.startswith('w2vvpp'))
+    config = load_config('configs.%s'% config_name)
+    
     # Load checkpoint
     logger.info('loading model...')
     checkpoint = torch.load(resume_file)
@@ -62,8 +66,9 @@ def main():
     best_perf = checkpoint['best_perf']
     config = checkpoint['config']
     if hasattr(config, 't2v_w2v'):
-        w2v_feature_file = os.path.join(rootpath, 'word2vec', 'flickr', 'vec500flickr30m', 'feature.bin')
+        w2v_feature_file = os.path.join(rootpath, config.w2v_name, 'feature.bin')
         config.t2v_w2v.w2v.binary_file = w2v_feature_file
+        logger.info("will read w2v from %s", w2v_feature_file)
 
     # Construct the model
     model = get_model('w2vvpp')(config)

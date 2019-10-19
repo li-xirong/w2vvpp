@@ -58,11 +58,6 @@ def parse_args():
     return args
 
 
-def load_config(config_path):
-    module = importlib.import_module(config_path)
-    return module.config()
-
-
 def main():
     opt = parse_args()
     print(json.dumps(vars(opt), indent = 2))
@@ -97,13 +92,16 @@ def main():
     bow_vocab_file = os.path.join(rootpath, trainCollection, 'TextData', 'vocab', '%s_%d.pkl'%(bow_encoding, config.threshold))
     config.t2v_bow = get_txt2vec(bow_encoding)(bow_vocab_file, norm=config.bow_norm)
 
-    w2v_data_path = os.path.join(rootpath, 'word2vec', 'flickr', 'vec500flickr30m')
+    w2v_data_path = os.path.join(rootpath, config.w2v_name) # 'word2vec', 'flickr', 'vec500flickr30m')
     config.t2v_w2v = get_txt2vec(w2v_encoding)(w2v_data_path)
 
     rnn_vocab_file = os.path.join(rootpath, trainCollection, 'TextData', 'vocab', '%s_%d.pkl'%(rnn_encoding, config.threshold))
     config.t2v_idx = get_txt2vec('idxvec')(rnn_vocab_file)
-    if config.we_dim == 500:
+
+    if config.rnn_we_dim == config.t2v_w2v.w2v.ndims: # check if rnn's word embedding has the same dimensionality as pre-trained w2v model
         config.we = get_we(config.t2v_idx.vocab, w2v_data_path)
+    else:
+        config.we = None # rnn's word emedding will be trained from scratch
 
     config.txt_fc_layers = map(int, config.txt_fc_layers.split('-'))
     if config.pooling == 'mean_last':
