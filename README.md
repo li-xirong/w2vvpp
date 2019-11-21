@@ -1,5 +1,5 @@
 # w2vvpp
-W2VV++: A fully deep learning solution for ad-hoc video search
+W2VV++: A fully deep learning solution for ad-hoc video search. The code assumes [video-level CNN features](https://github.com/xuchaoxi/video-cnn-feat) have been extracted. 
 
 ## Requirements
 * Ubuntu 16.04
