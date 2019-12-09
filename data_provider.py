@@ -27,7 +27,7 @@ class VisionDataset(data.Dataset):
 
     def __init__(self, params):
         self.vis_feat_file = BigFile(params['vis_feat']) if isinstance(params['vis_feat'], str) else params['vis_feat']
-        self.vis_ids = self.vis_feat_file.names
+        self.vis_ids = self.vis_feat_file.names if params.get('vis_ids', None) is None else params['vis_ids']
         self.length = len(self.vis_ids)
 
     def __getitem__(self, index):

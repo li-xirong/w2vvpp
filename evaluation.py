@@ -136,3 +136,22 @@ def eval_qry2retro(qry2retro_sim, n_qry=1):
     mir = (1.0/(ranks+1)).mean()
 
     return (r1, r5, r10, medr, meanr, mir)
+
+
+def eval(label_matrix):
+    ranks = np.zeros(label_matrix.shape[0])
+    aps = np.zeros(label_matrix.shape[0])
+
+    for index in range(len(ranks)):
+        rank = np.where(label_matrix[index]==1)[0] + 1
+        ranks[index] = rank[0]
+
+        aps[index] = np.mean([(i+1.)/rank[i] for i in range(len(rank))])
+
+    r1, r5, r10 = [100.0*np.mean([x <= k for x in ranks]) for k in [1, 5, 10]]
+    medr = np.floor(np.median(ranks))
+    meanr = ranks.mean()
+    mir = (1.0/ranks).mean()
+    mAP = aps.mean()
+
+    return (r1, r5, r10, medr, meanr, mir, mAP)
