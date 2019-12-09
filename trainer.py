@@ -39,7 +39,7 @@ def parse_args():
                         help='validation collection')
     parser.add_argument('--overwrite', type=int, default=0, choices=[0,1],
                         help='overwrite existed vocabulary file. (default: 0)')
-    parser.add_argument('--val_set', type=str,
+    parser.add_argument('--val_set', type=str, default='',
                         help='validation collection set (setA, setB). (default: setA)')
     parser.add_argument('--metric', type=str, default='mir', choices=['r1', 'r5', 'medr', 'meanr', 'mir'],
                         help='performance metric on validation set')
@@ -84,7 +84,7 @@ def main():
 
     collections = {'train': trainCollection, 'val': valCollection}
 
-    capfiles = {'train': '%s.caption.txt', 'val': val_set + '/%s.caption.txt'}
+    capfiles = {'train': '%s.caption.txt', 'val': os.path.join(val_set, '%s.caption.txt')}
     cap_file_paths = {x: os.path.join(rootpath, collections[x], 'TextData', capfiles[x]%collections[x]) for x in collections}
 
     vis_feat_files = {x: BigFile(os.path.join(rootpath, collections[x], 'FeatureData', config.vid_feat)) for x in collections}
@@ -190,14 +190,32 @@ def train(model, train_loader, epoch):
 
 def validate(model, val_loader, epoch, measure='cosine', metric='mir'):
     # compute the encoding for all the validation videos and captions
-    vis_embs, txt_embs, _, _ = evaluation.encode_data(model, val_loader)
+    vis_embs, txt_embs, vis_ids, txt_ids = evaluation.encode_data(model, val_loader)
+
+    keep_vis_order = []
+    keep_vis_ids = []
+    for i, vid in enumerate(vis_ids):
+        if vid not in keep_vis_ids:
+            keep_vis_order.append(i)
+            keep_vis_ids.append(vid)
+    vis_embs = vis_embs[keep_vis_order]
+    vis_ids = keep_vis_ids
 
     # video retrieval
     txt2vis_sim = evaluation.compute_sim(txt_embs, vis_embs, measure)
-    (r1, r5, r10, medr, meanr, mir) = evaluation.eval_qry2retro(txt2vis_sim, n_qry=1)
+    #(r1, r5, r10, medr, meanr, mir) = evaluation.eval_qry2retro(txt2vis_sim, n_qry=1)
+    inds = np.argsort(txt2vis_sim, axis=1)
+    label_matrix = np.zeros(inds.shape)
+    for index in range(inds.shape[0]):
+        ind = inds[index][::-1]
+        label_matrix[index][np.where(np.array(vis_ids)[ind]==txt_ids[index].split('#')[0])[0]]=1
+
+    (r1, r5, r10, medr, meanr, mir, mAP) = evaluation.eval(label_matrix)
+    sum_recall = r1 + r5 + r10
     print(" * Text to video:")
     print(" * r_1_5_10: {}".format([round(r1, 3), round(r5, 3), round(r10, 3)]))
     print(" * medr, meanr, mir: {}".format([round(medr, 3), round(meanr, 3), round(mir, 3)]))
+    print(" * mAP: {}".format(round(mAP, 3)))
     print(" * "+'-'*10)
 
     writer.add_scalar('val/r1', r1, epoch)
@@ -206,6 +224,7 @@ def validate(model, val_loader, epoch, measure='cosine', metric='mir'):
     writer.add_scalar('val/medr', medr, epoch)
     writer.add_scalar('val/meanr', meanr, epoch)
     writer.add_scalar('val/mir', mir, epoch)
+    writer.add_scalar('val/mAP', mAP, epoch)
 
     return locals().get(metric, mir)
 

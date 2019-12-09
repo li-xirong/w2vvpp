@@ -75,7 +75,8 @@ def main():
          .format(resume_file, epoch, best_perf))
 
     vis_feat_file = BigFile(os.path.join(rootpath, testCollection, 'FeatureData', config.vid_feat))
-    vis_loader = data.vis_provider({'vis_feat': vis_feat_file, 'pin_memory': True,
+    vis_ids = map(str.strip, open(os.path.join(rootpath, testCollection, 'VideoSets', testCollection+'.txt')))
+    vis_loader = data.vis_provider({'vis_feat': vis_feat_file, 'vis_ids': vis_ids, 'pin_memory': True,
                                     'batch_size': opt.batch_size, 'num_workers': opt.num_workers})
 
     vis_embs = None
@@ -103,6 +104,20 @@ def main():
         t2i_matrix = evaluation.compute_sim(txt_embs, vis_embs, measure=config.measure)
         inds = np.argsort(t2i_matrix, axis=1)
 
+        if testCollection == 'msrvtt10ktest':
+            label_matrix = np.zeros(inds.shape)
+            for index in range(inds.shape[0]):
+                ind = inds[index][::-1]
+                label_matrix[index][np.where(np.array(vis_ids)[ind]==txt_ids[index].split('#')[0])[0]]=1
+
+            (r1, r5, r10, medr, meanr, mir, mAP) = evaluation.eval(label_matrix)
+            sum_recall = r1 + r5 + r10
+            print(" * Text to video:")
+            print(" * r_1_5_10: {}".format([round(r1, 3), round(r5, 3), round(r10, 3)]))
+            print(" * medr, meanr, mir: {}".format([round(medr, 3), round(meanr, 3), round(mir, 3)]))
+            print(" * mAP: {}".format(round(mAP, 3)))
+            print(" * "+'-'*10)
+
         start = time.time()
         with open(pred_result_file, 'w') as fout:
             for index in range(inds.shape[0]):
@@ -111,6 +126,7 @@ def main():
                 fout.write(txt_ids[index]+' '+' '.join([vis_ids[i]+' %s'%t2i_matrix[index][i]
                     for i in ind])+'\n')
         print('writing result into file time: %.3f seconds\n' % (time.time()-start))
+
 
 
 if __name__ == '__main__':
