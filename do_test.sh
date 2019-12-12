@@ -13,13 +13,19 @@ overwrite=0
 
 if [ "$#" -ne 4 ]; then
     echo "Usage: $0 testCollection model_path sim_name query_sets"
-    exit
+    #exit
 fi
 
 testCollection=$1
+testCollection=iacc.3
+testCollection=native_language_queries
 model_path=$2
+model_path=$rootpath/w2vvpp/w2vvpp_resnext101_resnet152_subspace_bow_v191212.pth.tar
 sim_name=$3
+sim_name=w2vvpp_resnext101_resnet152_subspace_bow_v191212
 query_sets=$4 # tv16.avs.txt,tv17.avs.txt,tv18.avs.txt for TRECVID 16/17/18 and tv19.avs.txt for TRECVID19
+query_sets=tv16.avs.txt,tv17.avs.txt,tv18.avs.txt
+query_sets=native_language_queries.txt
 
 if [ ! -f "$model_path" ]; then
     echo "model not found: $model_path"
@@ -28,5 +34,5 @@ fi
 
 
 python predictor.py $testCollection $model_path $sim_name \
-    --query_sets $query_sets \
+    --query_sets $query_sets --save_embs \
     --rootpath $rootpath  --overwrite $overwrite

@@ -38,6 +38,7 @@ def parse_args():
                         help='size of a predicting mini-batch.')
     parser.add_argument('--num_workers', default=2, type=int,
                         help='Number of data loader workers.')
+    parser.add_argument('--save_embs', action='store_true', help='Whether to save embedding vectors')
  
     args = parser.parse_args()
     return args
@@ -105,7 +106,7 @@ def main():
             vis_embs, vis_ids = evaluation.encode_vis(model, vis_loader)
 
             # Save visual embeddings
-            if testCollection == 'native_language_queries':
+            if opt.save_embs:
                 resdir = os.path.join(output_dir, 'visual_embeddings')
                 if not os.path.exists(resdir):
                     os.makedirs(resdir)
@@ -120,7 +121,7 @@ def main():
         txt_embs, txt_ids = evaluation.encode_txt(model, txt_loader)
 
         # Save query embeddings
-        if testCollection == 'native_language_queries':
+        if opt.save_embs:
             resdir = os.path.join(output_dir, 'query_embeddings')
             if not os.path.exists(resdir):
                 os.makedirs(resdir)
