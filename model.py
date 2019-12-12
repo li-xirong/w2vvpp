@@ -253,6 +253,11 @@ class MultiScaleTxtNet (TxtNet):
     def _init_encoder(self, opt):
         self.encoder = MultiScaleTxtEncoder(opt)
 
+
+class BoWTxtNet (TxtNet):
+    def _init_encoder(self, opt):
+        self.encoder = BoWTxtEncoder(opt)
+
     
 class CrossModalNetwork(object):
 
@@ -387,8 +392,15 @@ class W2VVPP (CrossModalNetwork):
     def _init_txt_net(self, opt):
         self.txt_net = MultiScaleTxtNet(opt)
 
+class W2VVPP_BoW(CrossModalNetwork):
+    def _init_vis_net(self, opt):
+        self.vis_net = VisTransformNet(opt)
 
-NAME_TO_MODELS = {'w2vvpp': W2VVPP}
+    def _init_txt_net(self, opt):
+        self.txt_net = BoWTxtNet(opt)
+
+
+NAME_TO_MODELS = {'w2vvpp': W2VVPP, 'w2vvpp_bow': W2VVPP_BoW}
 
 def get_model(name):
     assert name in NAME_TO_MODELS, '%s not supported.'%name
