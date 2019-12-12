@@ -91,25 +91,26 @@ def main():
     config.vis_fc_layers = map(int, config.vis_fc_layers.split('-'))
     config.vis_fc_layers[0] = vis_feat_files['train'].ndims
 
-    bow_encoding, w2v_encoding, rnn_encoding = config.text_encoding.split('@')
-    rnn_encoding, config.pooling = rnn_encoding.split('_', 1)
+    bow_encoding = config.text_encoding
+    #rnn_encoding, config.pooling = rnn_encoding.split('_', 1)
 
     bow_vocab_file = os.path.join(rootpath, trainCollection, 'TextData', 'vocab', '%s_%d.pkl'%(bow_encoding, config.threshold))
     config.t2v_bow = get_txt2vec(bow_encoding)(bow_vocab_file, norm=config.bow_norm)
 
-    w2v_data_path = os.path.join(rootpath, 'word2vec', 'flickr', 'vec500flickr30m')
-    config.t2v_w2v = get_txt2vec(w2v_encoding)(w2v_data_path)
+    #w2v_data_path = os.path.join(rootpath, 'word2vec', 'flickr', 'vec500flickr30m')
+    #config.t2v_w2v = get_txt2vec(w2v_encoding)(w2v_data_path)
 
-    rnn_vocab_file = os.path.join(rootpath, trainCollection, 'TextData', 'vocab', '%s_%d.pkl'%(rnn_encoding, config.threshold))
-    config.t2v_idx = get_txt2vec('idxvec')(rnn_vocab_file)
-    if config.we_dim == 500:
-        config.we = get_we(config.t2v_idx.vocab, w2v_data_path)
+    #rnn_vocab_file = os.path.join(rootpath, trainCollection, 'TextData', 'vocab', '%s_%d.pkl'%(rnn_encoding, config.threshold))
+    #config.t2v_idx = get_txt2vec('idxvec')(rnn_vocab_file)
+    #if config.we_dim == 500:
+    #    config.we = get_we(config.t2v_idx.vocab, w2v_data_path)
 
     config.txt_fc_layers = map(int, config.txt_fc_layers.split('-'))
-    if config.pooling == 'mean_last':
-        config.txt_fc_layers[0] = config.rnn_size*2 + config.t2v_w2v.ndims + config.t2v_bow.ndims
-    else:
-        config.txt_fc_layers[0] = config.rnn_size + config.t2v_w2v.ndims + config.t2v_bow.ndims
+    #if config.pooling == 'mean_last':
+    #    config.txt_fc_layers[0] = config.rnn_size*2 + config.t2v_w2v.ndims + config.t2v_bow.ndims
+    #else:
+    #    config.txt_fc_layers[0] = config.rnn_size + config.t2v_w2v.ndims + config.t2v_bow.ndims
+    config.txt_fc_layers[0] = config.t2v_bow.ndims
 
     # Construct the model
     model = get_model('w2vvpp')(config)
