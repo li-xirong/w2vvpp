@@ -53,11 +53,11 @@ wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
 
 Model | TV16 | TV17 | TV18 | OVERALL
 |--- | ---| ---| ---| ---|
-|w2vvpp_resnext101_resnet152_subspace_v190916 | 0.161 | 0.220 | 0.122 | 0.168 |
+|w2vvpp_resnext101_resnet152_subspace_bow_v191212 | 0.161 | 0.220 | 0.122 | 0.168 |
 
 Model | TV19|
 |--- | ---|
-|w2vvpp_resnext101_resnet152_subspace_v190916 | 0.161|
+|w2vvpp_resnext101_resnet152_subspace_bow_v191212 | 0.161|
 
 
 ### Scripts for training, testing and evaluation
