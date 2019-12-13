@@ -59,6 +59,26 @@ class BowVec(Txt2Vec):
         return vec 
 
 
+class SoftBowVec(Txt2Vec):
+
+    def __init__(self, data_path, thresh=5, norm=0, clean=True):
+        super(SoftBowVec, self).__init__(data_path, norm, clean)
+        self.vocab = pickle.load(open(data_path, 'rb'))
+        self.ndims = len(self.vocab)
+        self.thresh = thresh
+        logger.info('vob size: %d, vec dim: %d' % (len(self.vocab), self.ndims))
+
+    def _encoding(self, words):
+        vec = np.zeros(self.ndims, )
+
+        for word in words:
+            idx = self.vocab.find(word)
+            if idx>=0:
+                vec[idx] += 1
+                for w, s in self.vocab.word2sim[word][1: self.thresh+1]:
+                    vec[self.vocab(w)] += s
+        return vec
+
 class W2Vec(Txt2Vec):
     def __init__(self, data_path, norm=0, clean=True):
         super(W2Vec, self).__init__(data_path, norm, clean)
@@ -103,6 +123,17 @@ class BowVecNSW(BowVec):
         return words        
 
 
+class SoftBowVecNSW(SoftBowVec):
+    def __init__(self, data_path, thresh=5, norm=0, clean=True):
+        super(SoftBowVecNSW, self).__init__(data_path, thresh, norm, clean)
+        if '_nsw' not in data_path:
+            logger.error('WARNING: loaded a vocabulary that contains stopwords')
+
+    def _preprocess(self, query):
+        words = TextTool.tokenize(query, clean=self.clean, language=self.lang, remove_stopword=True)
+        return words
+
+
 class W2VecNSW(W2Vec):
 
     def _preprocess(self, query):
@@ -110,7 +141,7 @@ class W2VecNSW(W2Vec):
         return words        
 
 
-NAME_TO_T2V = {'bow': BowVec, 'bow_nsw':  BowVecNSW, 'w2v': W2Vec, 'w2v_nsw': W2VecNSW, 'idxvec': IndexVec}
+NAME_TO_T2V = {'bow': BowVec, 'bow_nsw':  BowVecNSW, 'soft_bow': SoftBowVec, 'soft_bow_nsw': SoftBowVecNSW, 'w2v': W2Vec, 'w2v_nsw': W2VecNSW, 'idxvec': IndexVec}
 
 
 def get_txt2vec(name):
@@ -124,6 +155,8 @@ if __name__ == '__main__':
     t2v = BowVecNSW('VisualSearch/tgif-msrvtt10k/TextData/vocab/bow_5.pkl')
     t2v = W2Vec('VisualSearch/word2vec/flickr/vec500flickr30m')
     t2v = W2VecNSW('VisualSearch/word2vec/flickr/vec500flickr30m')
+    t2v = SoftBowVecNSW('VisualSearch/tgif-msrvtt10k/TextData/vocab/soft_bow_nsw_5.pkl')
     
     vec = t2v.encoding('a dog runs on grass')
     print vec.shape
+    print [(t2v.vocab[i],j) for i, j in enumerate(vec) if j != 0]

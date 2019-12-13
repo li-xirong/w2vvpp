@@ -9,7 +9,10 @@ from collections import Counter
 import os
 import sys
 
+import numpy as np
 from common import *
+from bigfile import BigFile
+from evaluation import compute_sim
 from util import checkToSkip, makedirsforfile
 from textlib import TextTool, Vocabulary
 
@@ -22,7 +25,7 @@ def read_from_txt_file(cap_file):
             captions.append(caption.strip())
     return captions
 
-def build_vocab(cap_file, encoding, threshold, lang):
+def build_vocab(options, cap_file, encoding, threshold, lang):
     nosw = '_nsw' in encoding
     logger.info("Build a simple vocabulary wrapper from %s", cap_file)
     captions = read_from_txt_file(cap_file)
@@ -44,9 +47,28 @@ def build_vocab(cap_file, encoding, threshold, lang):
         vocab.add('<end>')
         vocab.add('<unk>')
 
+    if 'soft' in encoding:
+        vocab.word2sim = {}
+        w2v_data_path = os.path.join(options.rootpath, 'word2vec', 'flickr', 'vec500flickr30m')
+        w2v_reader = BigFile(w2v_data_path)
+        words = [w[0] for w in word_counts]
+        renames, vectors = w2v_reader.read(words)
+        rename2index = dict( zip( renames, range(len(renames)) ) )
+        vectors = np.array(vectors)
+        sim_matrix = compute_sim(vectors, vectors)
+        inds = np.argsort(sim_matrix, axis=1)
+
     # Add words to the vocabulary.
     for word, c in word_counts:
         vocab.add(word)
+        if 'soft' in encoding:
+            if word in rename2index:
+                idx = rename2index[word]
+                ind = inds[idx][::-1]
+                word_sim = [(renames[i] , sim_matrix[idx][i]) for i in ind[:21]]
+            else:
+                word_sim = []
+            vocab.word2sim[word] = word_sim
     return vocab, word_counts
 
 
@@ -64,7 +86,7 @@ def process(options, collection):
         return 0
     
     cap_file = os.path.join(rootpath, collection, 'TextData', '%s.caption.txt'%collection)
-    vocab, word_counts = build_vocab(cap_file, encoding, threshold=threshold, lang=language)
+    vocab, word_counts = build_vocab(options, cap_file, encoding, threshold=threshold, lang=language)
     
     makedirsforfile(vocab_file)
     with open(vocab_file, 'wb') as fw:
