@@ -113,7 +113,7 @@ def main():
     config.txt_fc_layers[0] = config.t2v_bow.ndims
 
     # Construct the model
-    model = get_model('w2vvpp')(config)
+    model = get_model('w2vvpp_bow')(config)
     print(model.vis_net)
     print(model.txt_net)
 
