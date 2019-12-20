@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument('--num_workers', default=2, type=int,
                         help='Number of data loader workers.')
     parser.add_argument('--save_embs', action='store_true', help='Whether to save embedding vectors')
+    parser.add_argument('--evaluate', action='store_true', help='Where to evaluate results')
  
     args = parser.parse_args()
     return args
@@ -88,7 +89,8 @@ def main():
          .format(resume_file, epoch, best_perf))
 
     vis_feat_file = BigFile(os.path.join(rootpath, testCollection, 'FeatureData', config.vid_feat))
-    vis_loader = data.vis_provider({'vis_feat': vis_feat_file, 'pin_memory': True,
+    vis_ids = map(str.strip, open(os.path.join(rootpath, testCollection, 'ImageSets', testCollection+'.txt')))
+    vis_loader = data.vis_provider({'vis_feat': vis_feat_file, 'pin_memory': True, 'vis_ids': vis_ids,
                                     'batch_size': opt.batch_size, 'num_workers': opt.num_workers})
 
     vis_embs = None
@@ -98,6 +100,14 @@ def main():
         pred_result_file = os.path.join(output_dir, 'id.sent.score.txt')
 
         if util.checkToSkip(pred_result_file, opt.overwrite):
+            if opt.evaluate:
+                (r1, r5, r10, medr, meanr, mir, mAP) = evaluation.eval_file(pred_result_file)
+                tempStr = " * Text to video:\n"
+                tempStr += " * r_1_5_10: {}\n".format([round(r1, 3), round(r5, 3), round(r10, 3)])
+                tempStr += " * medr, meanr, mir: {}\n".format([round(medr, 3), round(meanr, 3), round(mir, 3)])
+                tempStr += " * mAP: {}\n".format(round(mAP, 3))
+                tempStr += " * "+'-'*10
+                print(tempStr)
             continue
         util.makedirs(output_dir)
 
@@ -129,6 +139,22 @@ def main():
 
         t2i_matrix = evaluation.compute_sim(txt_embs, vis_embs, measure=config.measure)
         inds = np.argsort(t2i_matrix, axis=1)
+
+        if opt.evaluate:
+            label_matrix = np.zeros(inds.shape)
+            for index in range(inds.shape[0]):
+                ind = inds[index][::-1]
+                label_matrix[index][np.where(np.array(vis_ids)[ind]==txt_ids[index].split('#')[0])[0]]=1
+
+            (r1, r5, r10, medr, meanr, mir, mAP) = evaluation.eval(label_matrix)
+            sum_recall = r1 + r5 + r10
+            tempStr = " * Text to video:\n"
+            tempStr += " * r_1_5_10: {}\n".format([round(r1, 3), round(r5, 3), round(r10, 3)])
+            tempStr += " * medr, meanr, mir: {}\n".format([round(medr, 3), round(meanr, 3), round(mir, 3)])
+            tempStr += " * mAP: {}\n".format(round(mAP, 3))
+            tempStr += " * "+'-'*10
+            print(tempStr)
+            open(os.path.join(output_dir, 'perf.txt'), 'w').write(tempStr)
 
         start = time.time()
         with open(pred_result_file, 'w') as fout:
