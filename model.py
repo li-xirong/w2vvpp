@@ -8,7 +8,7 @@ import torch.backends.cudnn as cudnn
 from torch.nn.utils.clip_grad import clip_grad_norm_
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
-from loss import ContrastiveLoss
+from loss import MarginRankingLoss
 from bigfile import BigFile
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -272,7 +272,7 @@ class CrossModalNetwork(object):
             self.txt_net.cuda()
             cudnn.benchmark = True
 
-        self.criterion = ContrastiveLoss(margin=opt.margin,
+        self.criterion = MarginRankingLoss(margin=opt.margin,
                                          measure=opt.measure,
                                          max_violation=opt.max_violation,
                                          cost_style=opt.cost_style,

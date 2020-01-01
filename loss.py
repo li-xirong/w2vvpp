@@ -19,12 +19,12 @@ def cosine_sim(query, retrio):
     return query.mm(retrio.t())
 
 
-class ContrastiveLoss(nn.Module):
+class MarginRankingLoss(nn.Module):
     """
-    Compute contrastive loss
+    Compute margin ranking loss
     """
     def __init__(self, margin=0, measure='cosine', max_violation=False, cost_style='sum', direction='bidir'):
-        super(ContrastiveLoss, self).__init__()
+        super(MarginRankingLoss, self).__init__()
         self.margin = margin
         self.cost_style = cost_style
         self.direction = direction
