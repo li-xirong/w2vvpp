@@ -155,3 +155,26 @@ def eval(label_matrix):
     mAP = aps.mean()
 
     return (r1, r5, r10, medr, meanr, mir, mAP)
+
+
+def eval_file(pred_res_file):
+    ranks = []
+    aps = []
+
+    for line in open(pred_res_file):
+        elems = line.strip().split()
+        assert len(elems)%2 == 1
+        qry_id = elems[0]
+        ret_ids = elems[1::2]
+        rank = [i+1 for i in range(len(ret_ids)) if ret_ids[i]==qry_id.split('#')[0]]
+
+        ranks.append(rank[0])
+        aps.append(np.mean([(i+1.)/rank[i] for i in range(len(rank))]))
+
+    r1, r5, r10 = [100.0*np.mean([x <= k for x in ranks]) for k in [1, 5, 10]]
+    medr = np.floor(np.median(ranks))
+    meanr =  np.mean(ranks)
+    mir = np.mean([1./r for r in ranks])
+    mAP = np.mean(aps)
+
+    return (r1, r5, r10, medr, meanr, mir, mAP)

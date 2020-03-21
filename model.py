@@ -230,6 +230,22 @@ class MultiScaleTxtEncoder (TxtEncoder):
         out = torch.cat((rnn_out, w2v_out, bow_out), dim=1)
         return out
 
+
+class MultiScaleTxtEncoder_BoW_W2V (TxtEncoder):
+    def __init__(self, opt):
+        super(MultiScaleTxtEncoder_BoW_W2V, self).__init__(opt)
+        self.w2v_encoder = W2VTxtEncoder(opt)
+        self.bow_encoder = BoWTxtEncoder(opt)
+
+    def forward(self, txt_input):
+        """Handles variable size captions
+        """
+        # Embed word ids to vectors
+        w2v_out = self.w2v_encoder(txt_input)
+        bow_out = self.bow_encoder(txt_input)
+        out = torch.cat(( w2v_out, bow_out), dim=1)
+        return out
+
   
 class TxtNet (nn.Module):
     def _init_encoder(self, opt):
@@ -252,6 +268,16 @@ class TxtNet (nn.Module):
 class MultiScaleTxtNet (TxtNet):
     def _init_encoder(self, opt):
         self.encoder = MultiScaleTxtEncoder(opt)
+
+
+class MultiScaleTxtNet_BoW_W2V (TxtNet):
+    def _init_encoder(self, opt):
+        self.encoder = MultiScaleTxtEncoder_BoW_W2V(opt)
+
+
+class BoWTxtNet (TxtNet):
+    def _init_encoder(self, opt):
+        self.encoder = BoWTxtEncoder(opt)
 
     
 class CrossModalNetwork(object):
@@ -387,8 +413,15 @@ class W2VVPP (CrossModalNetwork):
     def _init_txt_net(self, opt):
         self.txt_net = MultiScaleTxtNet(opt)
 
+class W2VVPP_BoW_W2V(CrossModalNetwork):
+    def _init_vis_net(self, opt):
+        self.vis_net = VisTransformNet(opt)
 
-NAME_TO_MODELS = {'w2vvpp': W2VVPP}
+    def _init_txt_net(self, opt):
+        self.txt_net = MultiScaleTxtNet_BoW_W2V(opt)
+
+
+NAME_TO_MODELS = {'w2vvpp': W2VVPP, 'w2vvpp_bow_w2v': W2VVPP_BoW_W2V}
 
 def get_model(name):
     assert name in NAME_TO_MODELS, '%s not supported.'%name

@@ -9,7 +9,7 @@ overwrite=0
 #model_path=$rootpath/$trainCollection/w2vvpp_train/$valCollection/$val_set/$config/runs_0/model_best.pth.tar
 #sim_name=$trainCollection/$valCollection/$val_set/$config
 
-#./do_test.sh iacc.3 ~/VisualSearch/tgif-msrvtt10k/w2vvpp_train/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0/model_best.pth.tar tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace/runs_0
+#./do_test.sh iacc.3 ~/VisualSearch/tgif-msrvtt10k/w2vvpp_train/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace_bow_w2v/runs_0/model_best.pth.tar tgif-msrvtt10k/tv2016train/setA/w2vvpp_resnext101-resnet152_subspace_bow_w2v/runs_0
 
 if [ "$#" -ne 4 ]; then
     echo "Usage: $0 testCollection model_path sim_name query_sets"

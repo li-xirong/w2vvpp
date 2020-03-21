@@ -38,9 +38,23 @@ def parse_args():
                         help='size of a predicting mini-batch.')
     parser.add_argument('--num_workers', default=2, type=int,
                         help='Number of data loader workers.')
+    parser.add_argument('--save_embs', action='store_true', help='Whether to save embedding vectors')
+    parser.add_argument('--evaluate', action='store_true', help='Where to evaluate results')
  
     args = parser.parse_args()
     return args
+
+
+def save_feature_vector(emb_vecs, emb_ids, resdir):
+    feat_binary_file = os.path.join(resdir, 'feature.bin')
+    feat_id_file = os.path.join(resdir, 'id.txt')
+    feat_shape_file = os.path.join(resdir, 'shape.txt')
+    with open(feat_binary_file, 'w') as feat_fw, open(feat_id_file, 'w') as id_fw, open(feat_shape_file, 'w') as shape_fw:
+        emb_vecs = emb_vecs.astype(np.float32)
+        for i, vec in enumerate(emb_vecs):
+            vec.tofile(feat_fw)
+        id_fw.write(' '.join(emb_ids))
+        shape_fw.write('%d %d' % emb_vecs.shape)
 
 
 def main():
@@ -66,7 +80,7 @@ def main():
         config.t2v_w2v.w2v.binary_file = w2v_feature_file
 
     # Construct the model
-    model = get_model('w2vvpp')(config)
+    model = get_model('w2vvpp_bow_w2v')(config)
     print(model.vis_net)
     print(model.txt_net)
 
@@ -86,12 +100,27 @@ def main():
         pred_result_file = os.path.join(output_dir, 'id.sent.score.txt')
 
         if util.checkToSkip(pred_result_file, opt.overwrite):
+            if opt.evaluate:
+                (r1, r5, r10, medr, meanr, mir, mAP) = evaluation.eval_file(pred_result_file)
+                tempStr = " * Text to video:\n"
+                tempStr += " * r_1_5_10: {}\n".format([round(r1, 3), round(r5, 3), round(r10, 3)])
+                tempStr += " * medr, meanr, mir: {}\n".format([round(medr, 3), round(meanr, 3), round(mir, 3)])
+                tempStr += " * mAP: {}\n".format(round(mAP, 3))
+                tempStr += " * "+'-'*10
+                print(tempStr)
             continue
         util.makedirs(output_dir)
 
         if vis_embs is None:
             logger.info('Encoding videos')
             vis_embs, vis_ids = evaluation.encode_vis(model, vis_loader)
+
+            # Save visual embeddings
+            if opt.save_embs:
+                resdir = os.path.join(output_dir, 'visual_embeddings')
+                if not os.path.exists(resdir):
+                    os.makedirs(resdir)
+                save_feature_vector(vis_embs, vis_ids, resdir)
 
         capfile = os.path.join(rootpath, testCollection, 'TextData', query_set)
         # load text data
@@ -101,10 +130,17 @@ def main():
         logger.info('Encoding %s captions' % query_set)
         txt_embs, txt_ids = evaluation.encode_txt(model, txt_loader)
 
+        # Save query embeddings
+        if opt.save_embs:
+            resdir = os.path.join(output_dir, 'query_embeddings')
+            if not os.path.exists(resdir):
+                os.makedirs(resdir)
+            save_feature_vector(txt_embs, txt_ids, resdir)
+
         t2i_matrix = evaluation.compute_sim(txt_embs, vis_embs, measure=config.measure)
         inds = np.argsort(t2i_matrix, axis=1)
 
-        if testCollection == 'msrvtt10ktest':
+        if opt.evaluate:
             label_matrix = np.zeros(inds.shape)
             for index in range(inds.shape[0]):
                 ind = inds[index][::-1]
@@ -128,7 +164,6 @@ def main():
                 fout.write(txt_ids[index]+' '+' '.join([vis_ids[i]+' %s'%t2i_matrix[index][i]
                     for i in ind])+'\n')
         print('writing result into file time: %.3f seconds\n' % (time.time()-start))
-
 
 
 if __name__ == '__main__':

@@ -60,17 +60,16 @@ wget http://lixirong.net/data/mm2019/iacc.3-avs-topics.tar.gz
 
 
 **Pre-trained models**
-+ [w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar)(240 MB)
++ [w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321.pth.tar](http://lixirong.net/data/mm2019/w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321.pth.tar)(171 MB)
 
 Model | TV16 | TV17 | TV18 | OVERALL
 |--- | ---| ---| ---| ---|
-|w2vvpp_resnext101_resnet152_subspace_v190916 | 0.162 | 0.223 | 0.101 | 0.162 |
+|w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 | 0.149 | 0.214 | 0.106 | 0.156 |
 
 Model | TV19|
 |--- | ---|
-|w2vvpp_resnext101_resnet152_subspace_v190916 | 0.139|
+|w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 | 0.148 |
 
-Note that due to SGD based training, the performance of a single model learned from scratch might differ slightly from those reported in the ACMMM'19 paper. For better and stable performance, ensemble is suggested.
 
 ### Scripts for training, testing and evaluation
 
@@ -97,11 +96,11 @@ source ~/w2vvpp/bin/activate
 # build vocabulary on the training set
 ./do_build_vocab.sh
 
-# train w2vvpp on tgif-msrvtt10k based on config "w2vvpp_resnext101-resnet152_subspace"
+# train w2vvpp on tgif-msrvtt10k based on config "w2vvpp_resnext101-resnet152_subspace_bow_w2v"
 trainCollection=tgif-msrvtt10k
 valCollection=tv2016train
 val_set=setA
-model_config=w2vvpp_resnext101-resnet152_subspace
+model_config=w2vvpp_resnext101-resnet152_subspace_bow_w2v
 
 ./do_train.sh $trainCollection $valCollection $val_set $model_config
 
@@ -122,28 +121,28 @@ cd tv-avs-eval
 Assume the model has been placed at the following path:
 
 ```bash
-~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar
+~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321.pth.tar
 ```
 
 ```bash
 
 # apply a pre-trained w2vvpp model on iacc.3 for answering tv16 / tv17 / tv18 queries
 
-./do_test.sh iacc.3 ~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar w2vvpp_resnext101_resnet152_subspace_v190916 tv16.avs.txt,tv17.avs.txt,tv18.avs.txt
+./do_test.sh iacc.3 ~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321.pth.tar w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 tv16.avs.txt,tv17.avs.txt,tv18.avs.txt
 
 # evaluate the performance
 cd tv-avs-eval
-./do_eval.sh iacc.3 tv16 w2vvpp_resnext101_resnet152_subspace_v190916 # tv16 infAP: 0.162
-./do_eval.sh iacc.3 tv17 w2vvpp_resnext101_resnet152_subspace_v190916 # tv17 infAP: 0.223
-./do_eval.sh iacc.3 tv18 w2vvpp_resnext101_resnet152_subspace_v190916 # tv18 infAP: 0.101
+./do_eval.sh iacc.3 tv16 w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321# tv16 infAP: 0.149
+./do_eval.sh iacc.3 tv17 w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 # tv17 infAP: 0.214
+./do_eval.sh iacc.3 tv18 w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 # tv18 infAP: 0.106
 ```
 
 ```bash
 # apply a pre-trained w2vvpp model on v3c1 for answering tv19 queries
-./do_test.sh v3c1 ~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_v190916.pth.tar w2vvpp_resnext101_resnet152_subspace_v190916 tv19.avs.txt
+./do_test.sh v3c1 ~/VisualSearch/w2vvpp/w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321.pth.tar w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 tv19.avs.txt
 # evaluate the performance
 cd tv-avs-eval
-./do_eval.sh v3c1 tv19 w2vvpp_resnext101_resnet152_subspace_v190916 # tv19 infAP: 0.139
+./do_eval.sh v3c1 tv19 w2vvpp_resnext101_resnet152_subspace_bow_w2v_v200321 # tv19 infAP: 0.148
 ```
 
 ## Tutorials
